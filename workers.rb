@@ -1,5 +1,4 @@
-
-"lel" do |arch, doc|
+"input" do |arch, doc|
 	return "ocr"
 end
 

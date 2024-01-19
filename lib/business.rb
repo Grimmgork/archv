@@ -1,4 +1,5 @@
-require "./lib/data.rb"
+require './lib/data.rb'
+require 'securerandom'
 
 class Archive
 	def initialize(path)
@@ -10,15 +11,25 @@ class Archive
 
 	def close()
 		@db.close() if @db
+		@db = nil
 	end
 
+	# Document
 	def create_document(location)
 		raise "location must not be empty!" if not location or location==""
 		return @documents.create(location)
 	end
 
+	def get_document(id)
+		return @documents.get_by_id(id)
+	end
+
 	def get_documents_from_location(location)
 		return @documents.get_by_location(location)
+	end
+
+	def delete_document(id)
+		@documents.delete(id)
 	end
 
 	def move_document(id, location)
@@ -28,6 +39,24 @@ class Archive
 		doc.last_moved = Time.now.to_i
 		@documents.update(doc)
 		end_transaction(@db)
+	end
+
+	# Attachment
+	def create_attachment(doc_id, extension, data, page=0)
+		start_transaction(@db)
+		filename = generate_attachment_name() + ".#{extension}"
+		@attachments.create(filename, doc_id, page)
+		@attachments.write_data(filename, data)
+		end_transaction(@db)
+	end
+
+	def generate_attachment_name()
+		return SecureRandom.uuid
+	end
+
+	def delete_attachment(id)
+		throw "id must not be nil!" if not id
+		@attachments.delete(id)
 	end
 
 	def write_attachment_data(name, data)

@@ -14,7 +14,7 @@ def compile_workers(code)
 	return code
 end
 
-def load_workers(archive, filename)
+def configure_workers(archive, filename)
 	code = compile_workers(File.read(filename))
 	workers = []
 	eval(code).each { |work|
@@ -25,7 +25,7 @@ end
 
 
 archive = Archive.new('data.db')
-workers = load_workers(archive, 'workers.rb')
+workers = configure_workers(archive, 'workers.rb')
 
 # run each worker in new thread
 threads = []

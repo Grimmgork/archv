@@ -20,7 +20,7 @@ class AttachmentRepository
 		@db = db
 	end
 
-	def create(name, doc_id=0)
+	def create(name, doc_id, page=0)
 		@db.execute("INSERT INTO sqlar (name, mtime, doc_id) VALUES(?, ?, ?);", name, Time.now.to_i, doc_id)
 		return @db.last_insert_row_id
 	end

@@ -19,6 +19,6 @@ class Worker
 		document = documents[0]
 
 		next_location = @work.call(@archive, document)
-		@archive.move_document(document.id, next_location)
+		@archive.move_document(document.id, next_location) if next_location
 	end
 end
