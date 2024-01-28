@@ -1,5 +1,5 @@
-require './lib/data.rb'
 require 'securerandom'
+require_relative 'data.rb'
 
 class Archive
 	def initialize(path)
@@ -14,14 +14,18 @@ class Archive
 		@db = nil
 	end
 
+	def attachment_contains(keyword)
+		return @attachments.contains(keyword)
+	end
+
 	# Document
-	def create_document(location)
+	def create_document(location="created")
 		raise "location must not be empty!" if not location or location==""
 		return @documents.create(location)
 	end
 
 	def get_document(id)
-		return @documents.get_by_id(id)
+		return @documents.where()
 	end
 
 	def get_documents_from_location(location)
@@ -33,6 +37,7 @@ class Archive
 	end
 
 	def move_document(id, location)
+		raise "location must not be empty!" if not location or location==""
 		start_transaction(@db)
 		doc = @documents.get_by_id(id)
 		doc.location = location

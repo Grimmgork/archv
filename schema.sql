@@ -1,11 +1,12 @@
-CREATE TABLE IF NOT EXISTS sqlar (
-  name TEXT PRIMARY KEY,  -- name of the file
-  mode INT,               -- access permissions
-  mtime INT,              -- last modification time
-  sz INT DEFAULT 0,       -- file size
-  data BLOB,              -- content
-  page INT DEFAULT 0,
-  doc_id INT DEFAULT 0
+CREATE TABLE IF NOT EXISTS attachments (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	name TEXT,				-- unique name of the file name.pdf
+	mode INT,				-- access permissions
+	mtime INT,				-- last modification time
+	sz INT DEFAULT 0,		-- file size
+	data BLOB,				-- content
+	page INT DEFAULT 0,
+	doc_id INT DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS documents (

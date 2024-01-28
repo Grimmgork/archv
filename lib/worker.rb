@@ -5,10 +5,6 @@ class Worker
 		@location = location
 	end
 
-	def print()
-		puts @location
-	end
-
 	def run()
 		return if not @work
 		return if not @location
