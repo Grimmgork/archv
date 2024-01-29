@@ -18,26 +18,26 @@ module Entity
 				return @@properties
 			end
 
-			def self.table
+			def self.get_table
 				return @@table
 			end
 
-			def self.set_table(name)
+			def self.table(name)
 				@@table = name
 			end
 
-			def self.primary_key
+			def self.get_primary_key
 				return @@primary_key
 			end
 
-			def self.set_primary_key(symbol)
+			def self.primary_key(symbol)
 				@@primary_key = symbol
 			end
 
-			def to_hash(lazy=true)
+			def to_hash(lazy=false)
 				res = {}
 				@@properties.each { |prop|
-					next if not lazy and @@lazy.include?(prop)
+					next if lazy and @@lazy.include?(prop)
 					res[prop.to_s] = send(prop)
 				}
 				return res
@@ -68,20 +68,20 @@ class Repository
 
 	def create()
 		entity = @entity_type.new()
-		hash = entity.to_hash()
-		@db.execute("INSERT INTO #{@entity_type.table} (#{hash.keys.join(",")}) VALUES(#{Array.new(hash.keys.length){"?"}.join(",")});", hash.values)
+		hash = entity.to_hash(true)
+		@db.execute("INSERT INTO #{@entity_type.get_table} (#{hash.keys.join(",")}) VALUES(#{Array.new(hash.keys.length){"?"}.join(",")});", hash.values)
 		return @db.last_insert_row_id
 	end
 
 	def byid(id)
 		props = @entity_type.properties
-		res = @db.get_first_row("SELECT #{props.join(",")} FROM #{@entity_type.table} WHERE #{@entity_type.primary_key}=?", id)
+		res = @db.get_first_row("SELECT #{props.join(",")} FROM #{@entity_type.get_table} WHERE #{@entity_type.get_primary_key}=?", id)
 		return @entity_type.from_hash(res)
 	end
 
 	def where(query, *args)
 		props = @entity_type.properties
-		res = @db.execute("SELECT #{props.join(",")} FROM #{@entity_type.table} WHERE (#{query});", args)
+		res = @db.execute("SELECT #{props.join(",")} FROM #{@entity_type.get_table} WHERE (#{query});", args)
 		entities = []
 		res.each do |row|
 			entities.append @entity_type.from_hash(row)
@@ -89,17 +89,22 @@ class Repository
 		return entities
 	end
 
-	def update(entity, lazy=true)
-		hash = entity.to_hash(lazy)
+	def update(entity, *lazy_properties)
+		hash = entity.to_hash(true)
+		lazy_properties.each { |prop| 
+			hash[prop.to_s]=entity.send(prop)
+		}
 		setters = hash.keys.map { |prop| "#{prop}=?" }
-		@db.execute("UPDATE #{@entity_type.table} SET #{setters.join(",")} WHERE #{@entity_type.primary_key}=?;", hash.values.append(entity.id))
+		id = entity.send(@entity_type.get_primary_key)
+		@db.execute("UPDATE #{@entity_type.get_table} SET #{setters.join(",")} WHERE #{@entity_type.get_primary_key}=?;", hash.values.append(id))
 	end
 
 	def delete(id)
-		@db.execute("DELETE FROM #{@entity_type.table} WHERE #{@entity_type.primary_key}=?;", id)
+		@db.execute("DELETE FROM #{@entity_type.get_table} WHERE #{@entity_type.get_primary_key}=?;", id)
 	end
 
 	def load_property(entity, property)
-
+		id = entity.send(@entity_type.get_primary_key)
+		return @db.get_first_value("SELECT #{property} FROM #{@entity_type.get_table} WHERE #{@entity_type.get_primary_key}=?;", id)
 	end
 end

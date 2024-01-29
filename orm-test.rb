@@ -2,7 +2,7 @@ require_relative "lib/orm.rb"
 
 class Document
 	include Entity
-	set_table "documents"
+	table "documents"
 	property :id
 	property :title
 	property :timestamp
@@ -15,8 +15,23 @@ class Document
 	end
 end
 
-repo = Repository.new("data.db", Document)
+class Attachment
+	include Entity
+	table "attachments"
+	property :id
+	property :name
+	property :sz
+	property :data, true
+	property :page
+	property :doc_id
+end
 
-doc = repo.byid(1)
-doc.title = "Hello world!"
+repo = Repository.new("data.db", Attachment)
+
+attch = repo.byid(1)
+attch.name = "filename.txt"
+attch.data = "asadad"
+attch.page = 6
+repo.update(attch, :data)
 repo.close()
+exit
