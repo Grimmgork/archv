@@ -1,13 +1,7 @@
 require_relative 'data.db'
 
 class DeleteAttachmentCommand
-	def initialize(id)
-		@id = id
-	end
-
-	def validate()
-		throw "id must not be null!" if not @id
-	end
+	attr_accessor id
 
 	def run()
 
@@ -15,43 +9,49 @@ class DeleteAttachmentCommand
 end
 
 class CreateAttachmentCommand
-	def initialize(name)
-		@name = name
-	end
-
-	def validate()
-		throw "name must not be null or empty!" if not @name or @name == ""
-	end
+	attr_accessor name
 
 	def run()
 
 	end
 end
 
-class UpdateAttachmentCommand
-	def initialize(attachment)
-
-	end
-
-	def validate()
-
-	end
+class EditAttachmentCommand
+	attr_accessor id
+	attr_accessor name
+	attr_accessor page
 
 	def run()
 
 	end
 end
 
-class GetAttachmentsWhereQuery
-	def initialize(query)
-		@query = query
-	end
-
-	def validate()
-		true
-	end
+class WriteAttachmentDataCommand
+	attr_accessor id
+	attr_accessor blob
 
 	def run()
-		@query
+
 	end
 end
+
+class EditDocumentCommand
+	attr_accessor id
+	attr_accessor title
+
+	def run()
+
+	end
+end
+
+class MoveDocumentCommand
+	attr_accessor location
+
+	def run()
+
+	end
+end
+
+cmd = DeleteAttachmentCommand.new()
+cmd.id = 1
+cmd.run()

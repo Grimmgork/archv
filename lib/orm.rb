@@ -54,7 +54,7 @@ module Entity
 	end
 end
 
-class Repository
+class SQLiteRepository
 	def initialize(path, entity_type)
 		@entity_type = entity_type
 		@db = SQLite3::Database.open path

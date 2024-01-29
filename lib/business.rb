@@ -1,5 +1,5 @@
 require 'securerandom'
-require_relative 'data.rb'
+require_relative 'domain.rb'
 
 class Archive
 	def initialize(path)
