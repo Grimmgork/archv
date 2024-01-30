@@ -34,7 +34,7 @@ module Entity
 				@@primary_key = symbol
 			end
 
-			def to_hash(lazy=false)
+			def to_h(lazy=false)
 				res = {}
 				@@properties.each { |prop|
 					next if lazy and @@lazy.include?(prop)
@@ -43,7 +43,7 @@ module Entity
 				return res
 			end
 
-			def self.from_hash(hash)
+			def self.from_h(hash)
 				entity = self.new()
 				@@properties.each { |prop|
 					entity.send("#{prop}=", hash[prop.to_s])
@@ -68,15 +68,15 @@ class SQLiteRepository
 
 	def create()
 		entity = @entity_type.new()
-		hash = entity.to_hash(true)
+		hash = entity.to_h(true)
 		@db.execute("INSERT INTO #{@entity_type.get_table} (#{hash.keys.join(",")}) VALUES(#{Array.new(hash.keys.length){"?"}.join(",")});", hash.values)
 		return @db.last_insert_row_id
 	end
 
-	def byid(id)
+	def get_by_id(id)
 		props = @entity_type.properties
 		res = @db.get_first_row("SELECT #{props.join(",")} FROM #{@entity_type.get_table} WHERE #{@entity_type.get_primary_key}=?", id)
-		return @entity_type.from_hash(res)
+		return @entity_type.from_h(res)
 	end
 
 	def where(query, *args)
@@ -84,13 +84,13 @@ class SQLiteRepository
 		res = @db.execute("SELECT #{props.join(",")} FROM #{@entity_type.get_table} WHERE (#{query});", args)
 		entities = []
 		res.each do |row|
-			entities.append @entity_type.from_hash(row)
+			entities.append @entity_type.from_h(row)
 		end
 		return entities
 	end
 
 	def update(entity, *lazy_properties)
-		hash = entity.to_hash(true)
+		hash = entity.to_h(true)
 		lazy_properties.each { |prop| 
 			hash[prop.to_s]=entity.send(prop)
 		}
