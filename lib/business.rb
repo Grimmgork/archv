@@ -1,95 +1,155 @@
-require 'securerandom'
 require_relative 'domain.rb'
 
 class Archive
 	def initialize(path)
-		@db = SQLite3::Database.open path
-
-		@documents = DocumentRepository.new(@db)
-		@attachments = AttachmentRepository.new(@db)
+		@path = path
 	end
 
-	def close()
-		@db.close() if @db
-		@db = nil
-	end
-
-	def attachment_contains(keyword)
-		return @attachments.contains(keyword)
-	end
-
-	# Document
-	def create_document(location="created")
-		raise "location must not be empty!" if not location or location==""
-		return @documents.create(location)
-	end
-
-	def get_document(id)
-		return @documents.where()
-	end
-
-	def get_documents_from_location(location)
-		return @documents.get_by_location(location)
-	end
-
-	def delete_document(id)
-		@documents.delete(id)
-	end
-
-	def move_document(id, location)
-		raise "location must not be empty!" if not location or location==""
-		start_transaction(@db)
-		doc = @documents.get_by_id(id)
-		doc.location = location
-		doc.last_moved = Time.now.to_i
-		@documents.update(doc)
-		end_transaction(@db)
-	end
-
-	# Attachment
-	def create_attachment(doc_id, extension, data, page=0)
-		start_transaction(@db)
-		filename = generate_attachment_name() + ".#{extension}"
-		@attachments.create(filename, doc_id, page)
-		@attachments.write_data(filename, data)
-		end_transaction(@db)
-	end
-
-	def generate_attachment_name()
-		return SecureRandom.uuid
-	end
-
-	def delete_attachment(id)
-		throw "id must not be nil!" if not id
-		@attachments.delete(id)
-	end
-
-	def write_attachment_data(name, data)
-		@attachments.write_data(name, data)
-	end
-
-	def read_attachment_data(name)
-		return @attachments.read_data(name)
-	end
-
-	def get_attachment_by_name(name)
-		return @attachments.get_by_name(name)
-	end
-
-	def get_attachments_of_document(id)
-		return @attachments.get_by_document(id)
-	end
-
-	def try_take_document(id)
-		start_transaction(@db)
-		doc = @documents.get_by_id(id)
-		if doc.taken == 0
-			doc.taken = 1
-			@documents.update(doc)
-			end_transaction(@db)
-			return true
-		end
-		end_transaction(@db)
-		return false
+	def get_repo(type)
+		return SQLiteRepository.new(@path, type)
 	end
 end
+
+class AttachmentManager
+	def initialize(context)
+		@context = context
+	end
+
+	def get_by_id(id)
+		repo = @context.get_repo(Attachment)
+		attachment = repo.get_by_id(id)
+		repo.close()
+		return attachment
+	end
+
+	def get_for_document(doc_id)
+		repo = @context.get_repo(Attachment)
+		attachments = repo.where("doc_id=?", doc_id)
+		repo.close()
+		return attachments
+	end
+
+	def attach_to_document(id, doc_id)
+		repo = @context.get_repo(Attachment)
+		attachment = repo.get_by_id(id)
+		attachment.doc_id = doc_id
+		repo.update(attachment)
+		repo.close()
+	end
+
+	def get_where(query, *args)
+		repo = @context.get_repo(Attachment)
+		attachments = repo.get_where(query, args)
+		repo.close()
+		return attachment
+	end
+
+	def delete(id)
+		repo = @context.get_repo(Attachment)
+		repo.delete(id)
+	end
+
+	def create(name, data: nil, page: 0, doc_id: 0)
+		repo = @context.get_repo(Attachment)
+		id = repo.create()
+		attachment = repo.get_by_id(id)
+		attachment.name = name
+		attachment.data = data
+
+		if data
+			attachment.sz = data.length
+		else
+			attachment.sz = 0
+		end
+
+		attachment.page = page
+		attachment.doc_id = doc_id
+		repo.update(attachment, :data)
+		repo.close()
+		return id
+	end
+
+	def update(attachment)
+		repo = @context.get_repo(Attachment)
+		repo.update(attachment)
+		repo.close()
+	end
+
+	def rename(id, name)
+		repo = @context.get_repo(Attachment)
+		attachment = repo.get_by_id(id)
+		attachment.name = name
+		repo.update(attachment)
+		repo.close()
+	end
+
+	def write_data(id, blob)
+		repo = @context.get_repo(Attachment)
+		attachment = repo.get_by_id(id)
+		attachment.sz = blob.length
+		attachment.data = blob
+		repo.update(attachment, :data)
+		repo.close()
+	end
+
+	def read_data(id)
+		repo = @context.get_repo(Attachment)
+		attachment = repo.get_by_id(id)
+		repo.load_property(attachment, :data)
+		repo.close()
+		return attachment.data
+	end
+end
+
+class DocumentManager
+	def initialize(context)
+		@context = context
+	end
+
+	def create(title)
+		timestamp = Time.now.to_i
+		repo = @context.get_repo(Document)
+		id = repo.create()
+		document = repo.get_by_id(id)
+		document.title = title
+		document.timestamp = timestamp
+		document.location = "new"
+		document.last_moved = timestamp
+		document.taken = 0
+		repo.update(document)
+		repo.close()
+		return id
+	end
+
+	def delete(id)
+		repo = @context.get_repo(Document)
+		repo.delete(id)
+		repo.close()
+	end
+
+	def update(document)
+		repo = @context.get_repo(Document)
+		repo.update(document)
+		repo.close()
+	end
+
+	def get_where(query, *args)
+		repo = @context.get_repo(Document)
+		documents = repo.where(query, args)
+		repo.close()
+		return documents
+	end
+
+	def move(id, location)
+		repo = @context.get_repo(Document)
+		document = repo.get_by_id(id)
+		document.location = location
+		document.last_moved = Time.now.to_i
+		repo.update(document)
+		repo.close()
+	end
+end
+
+context = Archive.new("data.db")
+attachments = AttachmentManager.new(context)
+puts attachments.get_by_id(1).to_h

@@ -28,7 +28,8 @@ def configure_workers(archive, filename)
 end
 
 archive = Archive.new(DATABASE)
-workers = configure_workers(archive, File.dirname(__FILE__) + '/workers.rb')
+manager = DocumentManager.new(archive)
+workers = configure_workers(manager, File.dirname(__FILE__) + '/workers.rb')
 
 # run each worker in new thread
 threads = []
@@ -54,4 +55,3 @@ Signal.trap("TERM") do
 end
 
 threads.each(&:join)
-archive.close()
