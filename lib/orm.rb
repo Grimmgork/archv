@@ -4,40 +4,40 @@ require 'sqlite3'
 module Entity
 	def self.included(base)
 		base.class_eval do
-			@@properties = []
-			@@primary_key = :id
-			@@lazy = Set[]
+			@properties = []
+			@primary_key = :id
+			@lazy = Set[]
 
 			def self.property(symbol, lazy=false)
 				attr_accessor symbol
-				@@properties.append(symbol)
-				@@lazy.add(symbol) if lazy
+				@properties.append(symbol)
+				@lazy.add(symbol) if lazy
 			end
 
-			def self.properties
-				return @@properties
+			def self.get_properties
+				return @properties
 			end
 
 			def self.get_table
-				return @@table
+				return @table
 			end
 
 			def self.table(name)
-				@@table = name
+				@table = name
 			end
 
 			def self.get_primary_key
-				return @@primary_key
+				return @primary_key
 			end
 
 			def self.primary_key(symbol)
-				@@primary_key = symbol
+				@primary_key = symbol
 			end
 
 			def to_h(lazy=false)
 				res = {}
-				@@properties.each { |prop|
-					next if lazy and @@lazy.include?(prop)
+				@properties.each { |prop|
+					next if lazy and @lazy.include?(prop)
 					res[prop.to_s] = send(prop)
 				}
 				return res
@@ -45,7 +45,7 @@ module Entity
 
 			def self.from_h(hash)
 				entity = self.new()
-				@@properties.each { |prop|
+				@properties.each { |prop|
 					entity.send("#{prop}=", hash[prop.to_s])
 				}
 				return entity
@@ -55,15 +55,9 @@ module Entity
 end
 
 class SQLiteRepository
-	def initialize(path, entity_type)
+	def initialize(db, entity_type)
 		@entity_type = entity_type
-		@db = SQLite3::Database.open path
-		@db.results_as_hash = true
-	end
-
-	def close()
-		@db.close() if @db
-		@db = nil
+		@db = db
 	end
 
 	def create()
@@ -74,13 +68,13 @@ class SQLiteRepository
 	end
 
 	def get_by_id(id)
-		props = @entity_type.properties
+		props = @entity_type.get_properties
 		res = @db.get_first_row("SELECT #{props.join(",")} FROM #{@entity_type.get_table} WHERE #{@entity_type.get_primary_key}=?", id)
 		return @entity_type.from_h(res)
 	end
 
 	def where(query, *args)
-		props = @entity_type.properties
+		props = @entity_type.get_properties
 		res = @db.execute("SELECT #{props.join(",")} FROM #{@entity_type.get_table} WHERE (#{query});", args)
 		entities = []
 		res.each do |row|

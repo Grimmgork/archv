@@ -1,6 +1,6 @@
 require 'yaml'
 require_relative '../lib/business.rb'
-require_relative '../lib/worker.rb'
+require_relative 'worker.rb'
 
 # CONFIG
 DATABASE = 'data.db'
@@ -18,28 +18,29 @@ def compile_workers(code)
 	return code
 end
 
-def configure_workers(archive, filename)
+def configure_workers(filename)
 	code = compile_workers(File.read(filename))
 	workers = []
 	eval(code).each { |work|
- 		workers.push(Worker.new(archive, work[0], work[1]))
+ 		workers.push(Worker.new(work[0], work[1]))
 	}
 	return workers
 end
 
-archive = Archive.new(DATABASE)
-manager = DocumentManager.new(archive)
-workers = configure_workers(manager, File.dirname(__FILE__) + '/workers.rb')
+workers = configure_workers(File.dirname(__FILE__) + '/workers.rb')
 
 # run each worker in new thread
 threads = []
 cancel = false
 for worker in workers
 	th = Thread.new(worker) do |worker|
+		puts "starting worker ->"
+		archive = Archive.new(DATABASE)
 		while not cancel do
-			worker.run()
+			worker.run(archive)
 			sleep(WORK_DELAY)
 		end
+		archive.close()
 	end
 	threads.append(th)
 end
@@ -47,11 +48,14 @@ end
 # Trap ^C 
 Signal.trap("INT") do
 	cancel=true
+	puts "shutting down ..."
 end
 
 # Trap Kill
 Signal.trap("TERM") do
 	cancel=true
+	puts "shutting down ..."
 end
 
 threads.each(&:join)
+puts "bye!"
