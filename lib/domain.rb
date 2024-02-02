@@ -21,4 +21,3 @@ class Attachment
  	property :page
  	property :doc_id
 end
-

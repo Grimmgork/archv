@@ -36,11 +36,15 @@ module Entity
 
 			def to_h(lazy=false)
 				res = {}
-				@properties.each { |prop|
+				self.class.get_properties().each { |prop|
 					next if lazy and @lazy.include?(prop)
 					res[prop.to_s] = send(prop)
 				}
 				return res
+			end
+
+			def to_json(options={})
+				to_h().to_json(options)
 			end
 
 			def self.from_h(hash)

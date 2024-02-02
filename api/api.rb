@@ -5,16 +5,40 @@ require_relative '../lib/business.rb'
 DATABASE = 'data.db'
 
 class App < Roda
-	plugin :json
+	plugin :json, classes: [Array, Hash, Document, Attachment]
 	route do |r|
-		r.on "doc" do
-			r.is Integer do |id|
-				arch = Archive.new(DATABASE)
-				doc = arch.get_document(id)
-				arch.close()
-				doc.to_h
+		new_archive() do |archive|
+			r.on "document" do
+				r.is Integer do |id|
+					docs = archive.get_document_where("id=?",id)
+					if docs.length <= 0
+						response.status = 404
+						r.halt
+					end
+					docs[0]
+				end
+
+				archive.get_document_where("true")
+			end
+
+			r.on "attachment" do 
+				r.id Integer do |id|
+					attchments = archive.get_attachment_where("id=?", id)
+				end
 			end
 		end
+	end
+
+	def new_archive()
+		archive = Archive.new(DATABASE)
+		begin 
+			result = yield(archive)
+		rescue
+			archive.close()
+			raise
+		end
+		archive.close()
+		return result
 	end
 end
 
