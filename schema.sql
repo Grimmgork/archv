@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS attachments (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	name TEXT,				-- unique name of the file name.pdf
+	name TEXT,				-- name of the file name.pdf
 	mode INT,				-- access permissions
 	mtime INT,				-- last modification time
 	sz INT DEFAULT 0,		-- file size

@@ -6,7 +6,7 @@ module Entity
 		base.class_eval do
 			@properties = []
 			@primary_key = :id
-			@lazy = Set[]
+			@lazy = Set.new()
 
 			def self.property(symbol, lazy=false)
 				attr_accessor symbol
@@ -14,8 +14,12 @@ module Entity
 				@lazy.add(symbol) if lazy
 			end
 
-			def self.get_properties
-				return @properties
+			def self.get_properties(lazy=false)
+				return @properties.select { |prop| (lazy and @lazy.include?(prop)) or not lazy } unless block_given?
+				@properties.each { |prop|
+					next if lazy and @lazy.include?(prop)
+					yield prop
+				}
 			end
 
 			def self.get_table
@@ -36,10 +40,9 @@ module Entity
 
 			def to_h(lazy=false)
 				res = {}
-				self.class.get_properties().each { |prop|
-					next if lazy and @lazy.include?(prop)
+				self.class.get_properties(lazy) do |prop|
 					res[prop.to_s] = send(prop)
-				}
+				end
 				return res
 			end
 

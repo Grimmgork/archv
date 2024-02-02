@@ -14,18 +14,18 @@ module AttachmentManager
 	end
 
 	def attach_attachment_to_document(id, doc_id)
-		start_transaction()
-		repo = get_repo(Attachment)
-		attachment = repo.get_by_id(id)
-		attachment.doc_id = doc_id
-		repo.update(attachment)
-		end_transaction()
+		transaction() do
+			repo = get_repo(Attachment)
+			attachment = repo.get_by_id(id)
+			attachment.doc_id = doc_id
+			repo.update(attachment)
+		end
 	end
 
 	def get_attachment_where(query, *args)
 		repo = get_repo(Attachment)
-		attachments = repo.get_where(query, args)
-		return attachment
+		attachments = repo.where(query, args)
+		return attachments
 	end
 
 	def delete_attachment(id)
@@ -34,31 +34,38 @@ module AttachmentManager
 	end
 
 	def create_attachment(name, data: nil, page: 0, doc_id: 0)
-		start_transaction()
-		repo = get_repo(Attachment)
-		id = repo.create()
-		attachment = repo.get_by_id(id)
-		attachment.name = name
-		attachment.data = data
+		raise "name cannot be empty!" if not name
+		raise "page cannot be negative!" if page < 0
+		transaction() do
+			repo = get_repo(Attachment)
+			id = repo.create()
+			attachment = repo.get_by_id(id)
+			attachment.name = name
+			attachment.data = data
 
-		if data
-			attachment.sz = data.length
-		else
-			attachment.sz = 0
+			if data
+				attachment.sz = data.length
+			else
+				attachment.sz = 0
+			end
+
+			attachment.page = page
+			attachment.doc_id = doc_id
+			repo.update(attachment, :data)
+			id
 		end
-
-		attachment.page = page
-		attachment.doc_id = doc_id
-		repo.update(attachment, :data)
-		end_transaction()
-		return id
 	end
 
-	def update_attachment(attachment)
-		start_transaction()
-		repo = get_repo(Attachment)
-		repo.update(attachment)
-		end_transaction()
+	def update_attachment(update)
+		transaction() do
+			repo = get_repo(Attachment)
+			attachment = repo.get_by_id(update.id)
+			raise "name cannot be empty!" if update.name == nil or update.name == ""
+			attachment.name = update.name
+			raise "page cannot be negative!" if update.page < 0
+			attachment.page = update.page
+			repo.update(attachment)
+		end
 	end
 
 	def rename_attachment(id, name)
@@ -69,13 +76,13 @@ module AttachmentManager
 	end
 
 	def write_attachment_data(id, blob)
-		start_transaction()	
-		repo = get_repo(Attachment)
-		attachment = repo.get_by_id(id)
-		attachment.sz = blob.length
-		attachment.data = blob
-		repo.update(attachment, :data)
-		end_transaction()	
+		transaction() do
+			repo = get_repo(Attachment)
+			attachment = repo.get_by_id(id)
+			attachment.sz = blob.length
+			attachment.data = blob
+			repo.update(attachment, :data)
+		end
 	end
 
 	def read_attachment_data(id)
@@ -88,51 +95,53 @@ end
 
 module DocumentManager
 	def create_document(title)
-		start_transaction()
-		timestamp = Time.now.to_i
-		repo = get_repo(Document)
-		id = repo.create()
-		document = repo.get_by_id(id)
-		document.title = title
-		document.timestamp = timestamp
-		document.location = "new"
-		document.last_moved = timestamp
-		document.taken = 0
-		repo.update(document)
-		end_transaction()
-		return id
+		transaction() do
+			timestamp = Time.now.to_i
+			repo = get_repo(Document)
+			id = repo.create()
+			document = repo.get_by_id(id)
+			document.title = title
+			document.timestamp = timestamp
+			document.location = "new"
+			document.last_moved = timestamp
+			document.taken = 0
+			repo.update(document)
+			id
+		end
 	end
 
 	def delete_document(id)
-		start_transaction()
-		repo = get_repo(Document)
-		repo.delete(id)
-		end_transaction()
+		transaction() do
+			repo = get_repo(Document)
+			repo.delete(id)
+		end
 	end
 
-	def update_document(document)
-		start_transaction()
-		repo = get_repo(Document)
-		repo.update(document)
-		end_transaction()
+	def update_document(update)
+		transaction() do
+			repo = get_repo(Document)
+			document = repo.get_by_id(update.id)
+			document.title = update.title
+			repo.update(document)
+		end
 	end
 
 	def get_document_where(query, *args)
-		start_transaction()
-		repo = get_repo(Document)
-		documents = repo.where(query, args)
-		end_transaction()
-		return documents
+		transaction() do
+			repo = get_repo(Document)
+			documents = repo.where(query, args)
+			documents
+		end
 	end
 
 	def move_document(id, location)
-		start_transaction()
-		repo = get_repo(Document)
-		document = repo.get_by_id(id)
-		document.location = location
-		document.last_moved = Time.now.to_i
-		repo.update(document)
-		end_transaction()
+		transaction() do
+			repo = get_repo(Document)
+			document = repo.get_by_id(id)
+			document.location = location
+			document.last_moved = Time.now.to_i
+			repo.update(document)
+		end
 	end
 end
 
@@ -146,16 +155,16 @@ class Archive
 		@db.results_as_hash = true
 	end
 
-	def start_transaction()
+	def transaction()
 		@db.execute("BEGIN TRANSACTION;")
-	end
-
-	def end_transaction(rollback=false)
-		if rollback
+		begin 
+			result = yield()
+		rescue
 			@db.execute("ROLLBACK;")
-		else 
-			@db.execute("COMMIT;")
+			raise
 		end
+		@db.execute("COMMIT;")
+		return result
 	end
 
 	def get_repo(type)

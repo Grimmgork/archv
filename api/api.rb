@@ -10,20 +10,37 @@ class App < Roda
 		new_archive() do |archive|
 			r.on "document" do
 				r.is Integer do |id|
-					docs = archive.get_document_where("id=?",id)
-					if docs.length <= 0
+					r.on "move" do 
+						"KEKEKEKEEKE"
+					end
+
+					r.get do 
+						documents = archive.get_document_where("id=?",id)
+						if documents.length <= 0
+							response.status = 404
+							r.halt
+						end
+						documents[0]
+					end
+				end
+
+				r.on "where" do
+					archive.get_document_where("true")
+				end
+			end
+
+			r.on "attachment" do
+				r.on Integer do |id|
+					attchments = archive.get_attachment_where("id=?", id)
+					if attachments.length <= 0
 						response.status = 404
 						r.halt
 					end
-					docs[0]
+					attachments[0]
 				end
 
-				archive.get_document_where("true")
-			end
-
-			r.on "attachment" do 
-				r.id Integer do |id|
-					attchments = archive.get_attachment_where("id=?", id)
+				r.on "where" do
+					archive.get_document_where("true")
 				end
 			end
 		end
