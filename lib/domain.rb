@@ -19,5 +19,6 @@ class Attachment
  	property :sz
  	property :data, true
  	property :page
+	property :mtime
  	property :doc_id
 end

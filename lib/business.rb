@@ -48,9 +48,11 @@ module AttachmentManager
 			else
 				attachment.sz = 0
 			end
-
+			
+			# TODO: test if doc_id exists
 			attachment.page = page
 			attachment.doc_id = doc_id
+			attachment.mtime = Time.now.to_i
 			repo.update(attachment, :data)
 			id
 		end
@@ -81,6 +83,7 @@ module AttachmentManager
 			attachment = repo.get_by_id(id)
 			attachment.sz = blob.length
 			attachment.data = blob
+			attachment.mtime = Time.now.to_i
 			repo.update(attachment, :data)
 		end
 	end
