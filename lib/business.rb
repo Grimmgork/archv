@@ -49,7 +49,11 @@ module AttachmentManager
 				attachment.sz = 0
 			end
 			
-			# TODO: test if doc_id exists
+			doc_repo = get_repo(Document)
+			if not doc_repo.get_by_id(doc_id)
+				raise "document with id '#{doc_id}' does not exists!"
+			end
+			
 			attachment.page = page
 			attachment.doc_id = doc_id
 			attachment.mtime = Time.now.to_i
@@ -113,10 +117,42 @@ module DocumentManager
 		end
 	end
 
-	def delete_document(id)
+	def try_take_document(id)
 		transaction() do
 			repo = get_repo(Document)
-			repo.delete(id)
+			document = repo.get_by_id(id)
+			raise "document with id '#{id}' does not exist!" if not document
+			if document.taken
+				break false
+			end
+			document.taken = 1
+			repo.update(document)
+			true
+		end
+	end
+
+	def free_document(id)
+		transaction() do
+			repo = get_repo(Document)
+			document = repo.get_by_id(id)
+			raise "document with id '#{id}' does not exist!" if not document
+			document.taken = 0
+			repo.update(document)
+		end
+	end
+
+	def delete_document(id)
+		transaction() do
+			doc_repo = get_repo(Document)
+			att_repo = get_repo(Attachment)
+			document = doc_repo.get_by_id(id)
+			raise "document with id '#{id}' does not exist!" if not document
+			attachments = att_repo.where("doc_id=?", id)
+			attachments.each { |att|
+				att.doc_id = 0
+				att_repo.update(att)
+			}
+			doc_repo.delete(id)
 		end
 	end
 
@@ -160,7 +196,7 @@ class Archive
 
 	def transaction()
 		@db.execute("BEGIN TRANSACTION;")
-		begin 
+		begin
 			result = yield()
 		rescue
 			@db.execute("ROLLBACK;")

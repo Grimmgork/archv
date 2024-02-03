@@ -77,6 +77,7 @@ class SQLiteRepository
 	def get_by_id(id)
 		props = @entity_type.get_properties
 		res = @db.get_first_row("SELECT #{props.join(",")} FROM #{@entity_type.get_table} WHERE #{@entity_type.get_primary_key}=?", id)
+		return nil if not res
 		return @entity_type.from_h(res)
 	end
 
