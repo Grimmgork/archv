@@ -1,4 +1,5 @@
 require 'roda'
+require 'json'
 require_relative '../lib/business.rb'
 
 # CONFIG
@@ -60,13 +61,10 @@ class App < Roda
 				end
 
 				r.is "where" do
-					sql = nil
-					begin
-						sql = hash_query(r.params)
-					rescue
-						r.halt(400)
-					end
-					archive.get_document_where(sql, r.params.values)
+					query = r.params["query"]
+					r.halt(400) if not query
+					expr = JSON.parse(query)
+					archive.get_document_where(expr)
 				end
 			end
 
@@ -120,13 +118,10 @@ class App < Roda
 				end
 
 				r.is "where" do
-					sql = nil
-					begin
-						sql = hash_query(r.params)
-					rescue
-						r.halt(400)
-					end
-					archive.get_attachment_where(sql, r.params.values)
+					query = r.params["query"]
+					r.halt(400) if not query
+					expr = JSON.parse(query)
+					archive.get_attachment_where(expr)
 				end
 			end
 		end

@@ -22,9 +22,9 @@ module AttachmentManager
 		end
 	end
 
-	def get_attachment_where(query, *args)
+	def get_attachment_where(expr)
 		repo = get_repo(Attachment)
-		attachments = repo.where(query, args)
+		attachments = repo.where(expr)
 		return attachments
 	end
 
@@ -165,10 +165,10 @@ module DocumentManager
 		end
 	end
 
-	def get_document_where(query, *args)
+	def get_document_where(expr)
 		transaction() do
 			repo = get_repo(Document)
-			documents = repo.where(query, args)
+			documents = repo.where(expr)
 			documents
 		end
 	end

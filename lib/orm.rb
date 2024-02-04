@@ -15,7 +15,12 @@ module Entity
 			end
 
 			def self.get_properties(lazy=false)
-				return @properties.select { |prop| (lazy and @lazy.include?(prop)) or not lazy } unless block_given?
+				if not block_given?
+					return @properties.select { |prop| 
+						lazy and not @lazy.include?(prop) or not lazy
+					}
+				end
+
 				@properties.each { |prop|
 					next if lazy and @lazy.include?(prop)
 					yield prop
@@ -75,14 +80,16 @@ class SQLiteRepository
 	end
 
 	def get_by_id(id)
-		props = @entity_type.get_properties
+		props = @entity_type.get_properties(true)
 		res = @db.get_first_row("SELECT #{props.join(",")} FROM #{@entity_type.get_table} WHERE #{@entity_type.get_primary_key}=?", id)
 		return nil if not res
 		return @entity_type.from_h(res)
 	end
 
-	def where(query, *args)
-		props = @entity_type.get_properties
+	def where(expr)
+		args = []
+		query = parse_expr(expr, args)
+		props = @entity_type.get_properties(true)
 		res = @db.execute("SELECT #{props.join(",")} FROM #{@entity_type.get_table} WHERE (#{query});", args)
 		entities = []
 		res.each do |row|
@@ -108,5 +115,39 @@ class SQLiteRepository
 	def load_property(entity, property)
 		id = entity.send(@entity_type.get_primary_key)
 		return @db.get_first_value("SELECT #{property} FROM #{@entity_type.get_table} WHERE #{@entity_type.get_primary_key}=?;", id)
+	end
+
+	def write_property(entity, property)
+		id = entity.send(@entity_type.get_primary_key)
+		value = entity.send(property)
+		@db.execute("UPDATE #{@entity_type.get_table} SET #{property}=?;", value)
+	end
+
+	def parse_expr(expr, values)
+		if expr.respond_to?('each')
+			operator = expr.shift
+			case operator
+			when "lt"
+				return "(#{parse_expr(expr[0], values)} < #{parse_expr(expr[1], values)})"
+			when "gt"
+				return "(#{parse_expr(expr[0], values)} > #{parse_expr(expr[1], values)})"
+			when "eq"
+				return "(#{parse_expr(expr[0], values)} = #{parse_expr(expr[1], values)})"
+			when "prop"
+				# TODO check for funny characters
+				return "#{expr[0]}"
+			when "and"
+				return "(#{parse_expr(expr[0], values)} AND #{parse_expr(expr[1], values)})"
+			when "or"
+				return "(#{parse_expr(expr[0], values)} OR #{parse_expr(expr[1], values)})"
+			end
+			raise "unknown operator '#{operator}'"
+		end
+
+		puts 
+		return expr.to_s if expr == true or expr == false
+		# literal types
+		values.append(expr)
+		return "?"
 	end
 end

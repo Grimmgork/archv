@@ -1,6 +1,6 @@
 require 'yaml'
 require_relative '../lib/business.rb'
-require_relative 'worker.rb'
+require_relative './worker.rb'
 
 # CONFIG
 DATABASE = 'data.db'

@@ -1,4 +1,4 @@
-require_relative '../lib/business.rb'
+require './lib/business.rb'
 require 'rtesseract'
 
 "input" do |arch, doc|
