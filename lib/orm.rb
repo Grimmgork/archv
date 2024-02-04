@@ -183,7 +183,7 @@ class SQLiteRepository
 			when "or"
 				return "(#{parse_expr(expr[0], values)} OR #{parse_expr(expr[1], values)})"
 			end
-			raise "unknown operator '#{operator}'"
+			raise "unknown operator '#{operator}'!"
 		end
 
 		return expr.to_s if expr == true or expr == false

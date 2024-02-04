@@ -16,11 +16,9 @@ class App < Roda
 				r.on Integer do |id|
 					r.get do
 						r.is do
-							documents = archive.get_document_where("id=?",id)
-							if documents.length <= 0
-								r.halt(404)
-							end
-							documents[0]
+							document = archive.get_document_by_id(id)
+							r.halt(404) if not document
+							document
 						end
 					end
 
@@ -48,11 +46,8 @@ class App < Roda
 						end
 
 						r.is do
-							documents = archive.get_document_where("id=?", id)
-							if documents.length <= 0
-								r.halt(404)
-							end
-							document = documents[0]
+							document = archive.get_document_by_id(id)
+							r.halt(404) if not document
 							update_from_hash(document, r.params, :title)
 							archive.update_document(document)
 							r.halt(200)
@@ -62,7 +57,7 @@ class App < Roda
 
 				r.is "query" do
 					query = parse_simple_query(r.params)
-					archive.get_document_where(query)
+					archive.get_documents_where(query)
 				end
 			end
 
@@ -70,21 +65,14 @@ class App < Roda
 				r.on Integer do |id|
 					r.get do
 						r.is do
-							attachments = archive.get_attachment_where("id=?", id)
-							if attachments.length <= 0
-								response.status = 404
-								r.halt
-							end
-							attachments[0]
+							attachment = archive.get_attachment_by_id(id)
+							r.halt(404) if not attachment
+							attachment
 						end
 
 						r.is "data" do
-							attachments = archive.get_attachment_where("id=?", id)
-							if attachments.length <= 0
-								response.status = 404
-								r.halt
-							end
-							attachment = attachments[0]
+							attachment = archive.get_attachment_by_id(id)
+							r.halt(404) if not attachment
 							data = archive.read_attachment_data(id)
 							headers = { 
 								"Content-Type" => "application/octet-stream",
@@ -96,11 +84,8 @@ class App < Roda
 
 					r.post do
 						r.is do
-							attachments = archive.get_attachment_where("id=?", id)
-							if attachments.length <= 0
-								r.halt(404)
-							end
-							attachment = attachments[0]
+							attachment = archive.get_attachment_by_id(id)
+							r.halt(404) if not attachment
 							update_from_hash(attachment, r.params, :name, :page)
 							archive.update_attachment(attachment)
 							r.halt(200)
@@ -117,7 +102,7 @@ class App < Roda
 
 				r.is "query" do
 					query = parse_simple_query(r.params)
-					archive.get_attachment_where(query)
+					archive.get_attachments_where(query)
 				end
 			end
 		end
