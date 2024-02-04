@@ -60,11 +60,9 @@ class App < Roda
 					end
 				end
 
-				r.is "where" do
-					query = r.params["query"]
-					r.halt(400) if not query
-					expr = JSON.parse(query)
-					archive.get_document_where(expr)
+				r.is "query" do
+					query = parse_simple_query(r.params)
+					archive.get_document_where(query)
 				end
 			end
 
@@ -117,11 +115,9 @@ class App < Roda
 					end
 				end
 
-				r.is "where" do
-					query = r.params["query"]
-					r.halt(400) if not query
-					expr = JSON.parse(query)
-					archive.get_attachment_where(expr)
+				r.is "query" do
+					query = parse_simple_query(r.params)
+					archive.get_attachment_where(query)
 				end
 			end
 		end
@@ -139,15 +135,20 @@ class App < Roda
 		return result
 	end
 
-	def hash_query(hash)
-		return "true" if hash.keys.length == 0
-		expressions = []
-		hash.keys.each { |key|
-			str = key.to_s
-			raise "invalid name!" if not str.match(/^[a-zA-Z\-_]+$/) 
-			expressions.append("#{str}=?")
-		}
-		return expressions.join(" AND ")
+	def parse_simple_query(params)
+		if params["where"].class == String
+			params["where"] = JSON.parse(params["where"])
+		end
+		if params["sort"].class == String
+			params["sort"] = JSON.parse(params["sort"])
+		end
+		if params["skip"].class == String
+			params["skip"] = JSON.parse(params["skip"])
+		end
+		if params["take"].class == String
+			params["take"] = JSON.parse(params["take"])
+		end
+		params
 	end
 
 	def update_from_hash(entity, hash, *properties)
