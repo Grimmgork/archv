@@ -74,6 +74,7 @@ class SQLiteContext
 
 	def transaction()
 		@db.execute("BEGIN TRANSACTION;")
+		result = nil
 		begin
 			result = yield()
 		rescue

@@ -9,11 +9,21 @@ class Worker
 		return if not @location
 
 		# TODO maybe inject a selection function, (sorting)
-		documents = archive.get_document_where("location=?", @location)
-		return if documents.length == 0
+		documents = archive.get_documents_where({ "where" => ["and", ["eq", ["prop", "location"], @location], ["eq", ["prop", "taken"], 0]], "take" => 1})
+		return if documents.length <= 0
 		document = documents[0]
 
-		next_location = @work.call(archive, document)
-		archive.move_document(document.id, next_location) if next_location
+		if not archive.try_take_document(document.id)
+			return
+		end
+
+		begin
+			next_location = @work.call(archive, document)
+			archive.move_document(document.id, next_location) if next_location
+		rescue
+			archive.move_document(document.id, "error")
+		end
+		
+		archive.free_document(document.id)
 	end
 end

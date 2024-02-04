@@ -9,7 +9,7 @@ module AttachmentManager
 
 	def get_attachments_for_document(doc_id)
 		repo = get_repo(Attachment)
-		attachments = repo.where("doc_id=?", doc_id)
+		attachments = repo.where({ "where" => ["eq", ["prop", "doc_id"], doc_id] })
 		return attachments
 	end
 
@@ -122,8 +122,8 @@ module DocumentManager
 			repo = get_repo(Document)
 			document = repo.get_by_id(id)
 			raise "document with id '#{id}' does not exist!" if not document
-			if document.taken
-				break false
+			if document.taken == 1
+				next false
 			end
 			document.taken = 1
 			repo.update(document)
@@ -166,7 +166,7 @@ module DocumentManager
 	end
 
 	def get_documents_where(query)
-		transaction() do
+		@context.transaction() do
 			repo = get_repo(Document)
 			documents = repo.where(query)
 			documents
@@ -202,9 +202,11 @@ class Archive
 	end
 
 	def transaction(&block)
+		result = "nothin"
 		@context.transaction do
-			block.call
+			result = block.call
 		end
+		result
 	end
 
 	def close()
