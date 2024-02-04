@@ -66,6 +66,34 @@ module Entity
 	end
 end
 
+class SQLiteContext
+	def initialize(path)
+		@db = SQLite3::Database.open path
+		@db.results_as_hash = true
+	end
+
+	def transaction()
+		@db.execute("BEGIN TRANSACTION;")
+		begin
+			result = yield()
+		rescue
+			@db.execute("ROLLBACK;")
+			raise
+		end
+		@db.execute("COMMIT;")
+		return result
+	end
+
+	def get_repo(type)
+		return SQLiteRepository.new(@db, type)
+	end
+
+	def close()
+		@db.close() if @db
+		@db = nil
+	end
+end
+
 class SQLiteRepository
 	def initialize(db, entity_type)
 		@entity_type = entity_type

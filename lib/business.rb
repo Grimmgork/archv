@@ -190,33 +190,24 @@ module DocumentManager
 end
 
 class Archive
-
 	include AttachmentManager
 	include DocumentManager
 
 	def initialize(path)
-		@db = SQLite3::Database.open path
-		@db.results_as_hash = true
-	end
-
-	def transaction()
-		@db.execute("BEGIN TRANSACTION;")
-		begin
-			result = yield()
-		rescue
-			@db.execute("ROLLBACK;")
-			raise
-		end
-		@db.execute("COMMIT;")
-		return result
+		@context = SQLiteContext.new(path)
 	end
 
 	def get_repo(type)
-		return SQLiteRepository.new(@db, type)
+		@context.get_repo(type)
+	end
+
+	def transaction(&block)
+		@context.transaction do
+			block.call
+		end
 	end
 
 	def close()
-		@db.close() if @db
-		@db = nil
+		@context.close()
 	end
 end
