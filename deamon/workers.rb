@@ -1,7 +1,6 @@
-require 'rtesseract'
+require 'tempfile'
 
 "input" do |arch, doc|
-	puts "work!"
 	return "ocr"
 end
 
@@ -10,5 +9,12 @@ end
   	attachments.each { |attch|
   		attch.data = arch.read_attachment_data(attch.id)
   	}
+
+	# create temp files from data
+
+	# run tesseract on tempfiles
+
+	# create attachment
+	# write resulting pdf temp file into database
   	return "archive"
 end

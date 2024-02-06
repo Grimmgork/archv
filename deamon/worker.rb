@@ -8,8 +8,12 @@ class Worker
 		return if not @work
 		return if not @location
 
-		# TODO maybe inject a selection function, (sorting)
-		documents = archive.get_documents_where({ "where" => ["and", ["eq", ["prop", "location"], @location], ["eq", ["prop", "taken"], 0]], "take" => 1})
+		documents = archive.get_documents_where({
+			"where" => ["and", ["eq", ["prop", "location"], @location], ["eq", ["prop", "taken"], 0]],
+			"sort"  => { "last_moved" => true },
+			"take"  => 1
+		})
+		
 		return if documents.length <= 0
 		document = documents[0]
 
