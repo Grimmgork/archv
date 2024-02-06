@@ -181,7 +181,9 @@ class SQLiteRepository
 
 	def load_property(entity, property)
 		id = entity.send(@primary_key)
-		return @db.get_first_value("SELECT #{property} FROM #{@tablename} WHERE #{@primary_key}=?;", id)
+		value = @db.get_first_value("SELECT #{property} FROM #{@tablename} WHERE #{@primary_key}=?;", id)
+		return value
+		# entity.send(:data, value)
 	end
 
 	def write_property(entity, property)

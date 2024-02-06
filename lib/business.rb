@@ -95,8 +95,9 @@ module AttachmentManager
 	def read_attachment_data(id)
 		repo = get_repo(Attachment)
 		attachment = repo.get_by_id(id)
-		repo.load_property(attachment, :data)
-		return attachment.data
+		return repo.load_property(attachment, :data).force_encoding(Encoding::UTF_8)
+		# puts attachment.data.length
+		# return attachment.data
 	end
 end
 
