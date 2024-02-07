@@ -183,7 +183,6 @@ class SQLiteRepository
 		id = entity.send(@primary_key)
 		value = @db.get_first_value("SELECT #{property} FROM #{@tablename} WHERE #{@primary_key}=?;", id)
 		return value
-		# entity.send(:data, value)
 	end
 
 	def write_property(entity, property)
@@ -207,12 +206,16 @@ class SQLiteRepository
 				return "(#{parse_expr(expr[0], values)} > #{parse_expr(expr[1], values)})"
 			when "eq"
 				return "(#{parse_expr(expr[0], values)} = #{parse_expr(expr[1], values)})"
+			when "like"
+				return "(#{parse_expr(expr[0], values)} LIKE #{parse_expr(expr[1], values)})"
 			when "prop"
 				return "#{prop_safe(expr[0])}"
 			when "and"
-				return "(#{parse_expr(expr[0], values)} AND #{parse_expr(expr[1], values)})"
+				return "(#{(expr.map { |ex| parse_expr(ex, values) }).join(" AND ")})"
+				# return "(#{parse_expr(expr[0], values)} AND #{parse_expr(expr[1], values)})"
 			when "or"
-				return "(#{parse_expr(expr[0], values)} OR #{parse_expr(expr[1], values)})"
+				return "(#{(expr.map { |ex| parse_expr(ex, values) }).join(" OR ")})"
+				# return "(#{parse_expr(expr[0], values)} OR #{parse_expr(expr[1], values)})"
 			end
 			raise "unknown operator '#{operator}'!"
 		end
@@ -224,3 +227,6 @@ class SQLiteRepository
 	end
 end
 
+# values = []
+# puts parse_expr(["and", 1, 2, 3, 4], values)
+# puts values

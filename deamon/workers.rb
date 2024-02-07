@@ -6,34 +6,40 @@ require './deamon/tesseract.rb'
 end
 
 "ocr" do |arch, doc|
-  	attachments = arch.get_attachments_for_document(doc.id)
+	attachments = arch.get_attachments_where({ 
+		"where" => ["and", 
+			["eq", ["prop", "doc_id"], doc.id],
+			["or", 
+				["like", ["prop", "name"], "%.jpg"], 
+				["like", ["prop", "name"], "%.jpeg"], 
+				["like", ["prop", "name"], "%.png"]
+			]
+		],
+		"sort" => { "page" => true }
+	})
 
-	# select suitable filetypes
-	attachments = attachments.select { |attch|
-		attch.name =~ /(?:\.jpg)|(?:\.png)|(?:\.jpeg)$/
-	}
-
-	# TODO Sort by Pages
-
-	raise "no suitable attachments for document #{doc.id}" if attachments.length == 0
+	if attachments.length == 0
+		raise "no suitable attachments for ocr on document #{doc.id}!"
+	end
 
 	# create temp files from data
   	paths = attachments.map { |attch|
 		path = Dir::Tmpname.create(['attch', ".#{attch.name}"]) {}
 		data = arch.read_attachment_data(attch.id)
-		raise "attachments data is empty #{attch.id}!" if not data
+		if not data
+			raise "attachments data is empty #{attch.id}!"
+		end
 		file = File.open(path, "wb")
 		file.write(data)
 		file.close()
 		path
   	}
 
-	puts paths
-
 	# run tesseract on tempfiles
 	tess = Tesseract.new(paths)
 	out = tess.run(lang: 'deu')
-
+        
+    # load result files into database
 	file = File.open("#{out}.pdf", "rb")
 	arch.create_attachment("#{out}.pdf", data: file.read, doc_id: doc.id)
 	file.close
@@ -42,6 +48,7 @@ end
 	arch.create_attachment("#{out}.txt", data: file.read, doc_id: doc.id)
 	file.close
 
+	# clean up
 	tess.close()
   	return "archive"
 end
