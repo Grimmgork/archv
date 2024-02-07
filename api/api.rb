@@ -12,98 +12,81 @@ class App < Roda
 	plugin :json_parser
 	route do |r|
 		new_archive() do |archive|
-			r.on "document" do 
-				r.on Integer do |id|
-					r.get do
-						r.is do
-							document = archive.get_document_by_id(id)
-							r.halt(404) if not document
-							document
-						end
-					end
-
-					r.post do
-						r.is "move" do
-							location = r.params["location"]
-							if not location
-								r.halt(400)
-							end
-							archive.move_document(id, location)
-							r.halt(200)
-						end
-
-						r.is "attach" do 
-							page = r.params["page"].to_i
-							if page == nil or page < 0
-								page = 0
-							end
-
-							file = r.params["file"]
-							name = file[:filename].force_encoding(Encoding::UTF_8)
-
-							att_id = archive.create_attachment(name, page: page, doc_id: id, data: file[:tempfile].read)
-							att_id.to_s
-						end
-
-						r.is do
-							document = archive.get_document_by_id(id)
-							r.halt(404) if not document
-							update_from_hash(document, r.params, :title)
-							archive.update_document(document)
-							r.halt(200)
-						end
-					end
-				end
-
-				r.is "query" do
-					query = parse_simple_query(r.params)
-					archive.get_documents_where(query)
-				end
+			r.get "document", Integer do |id|
+				document = archive.get_document_by_id(id)
+				r.halt(404) if not document
+				document
 			end
 
-			r.on "attachment" do
-				r.on Integer do |id|
-					r.get do
-						r.is do
-							attachment = archive.get_attachment_by_id(id)
-							r.halt(404) if not attachment
-							attachment
-						end
+			r.get "document", "query" do
+				query = parse_simple_query(r.params)
+				archive.get_documents_where(query)
+			end
 
-						r.is "data" do
-							attachment = archive.get_attachment_by_id(id)
-							r.halt(404) if not attachment
-							data = archive.read_attachment_data(id)
-							headers = { 
-								"Content-Type" => "application/octet-stream",
-								"Content-Disposition" => "attachment; filename=\"#{attachment.name}\""
-							}
-							r.halt(200, headers, data)
-						end
-					end
+			r.post "document", Integer do |id|
+				document = archive.get_document_by_id(id)
+				r.halt(404) if not document
+				update_from_hash(document, r.params, :title)
+				archive.update_document(document)
+				r.halt(200)
+			end
 
-					r.post do
-						r.is do
-							attachment = archive.get_attachment_by_id(id)
-							r.halt(404) if not attachment
-							update_from_hash(attachment, r.params, :name, :page)
-							archive.update_attachment(attachment)
-							r.halt(200)
-						end
-					end
+			r.post "document", Integer, "move" do |id|
+				location = r.params["location"]
+				if not location
+					r.halt(400)
+				end
+				archive.move_document(id, location)
+				r.halt(200)
+			end
 
-					r.delete do 
-						r.is do
-							archive.delete_attachment(id)
-							r.halt(200)
-						end
-					end
+			r.post "document", Integer, "attach" do |id|
+				page = r.params["page"].to_i
+				if page == nil or page < 0
+					page = 0
 				end
 
-				r.is "query" do
-					query = parse_simple_query(r.params)
-					archive.get_attachments_where(query)
-				end
+				file = r.params["file"]
+				name = file[:filename].force_encoding(Encoding::UTF_8)
+
+				att_id = archive.create_attachment(name, page: page, doc_id: id, data: file[:tempfile].read)
+				att_id.to_s
+			end
+
+
+			r.get "attachment", "query" do
+				query = parse_simple_query(r.params)
+				archive.get_attachments_where(query)
+			end
+
+			r.get "attachment", Integer do |id|
+				attachment = archive.get_attachment_by_id(id)
+				r.halt(404) if not attachment
+				attachment
+			end
+
+			r.get "attachment", Integer, "data" do |id|
+				attachment = archive.get_attachment_by_id(id)
+				r.halt(404) if not attachment
+				data = archive.read_attachment_data(id)
+				headers = { 
+					"Content-Type" => "application/octet-stream",
+					"Content-Disposition" => "attachment; filename=\"#{attachment.name}\""
+				}
+				r.halt(200, headers, data)
+			end
+
+			r.post "attachment", Integer do |id|
+				attachment = archive.get_attachment_by_id(id)
+				r.halt(404) if not attachment
+				update_from_hash(attachment, r.params, :name, :page)
+				archive.update_attachment(attachment)
+				r.halt(200)
+			end
+
+			r.delete "attachment", Integer do |id|
+				archive.delete_attachment(id)
+				r.halt(200)
 			end
 		end
 	end

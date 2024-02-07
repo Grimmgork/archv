@@ -23,10 +23,9 @@ class Worker
 
 		begin
 			next_location = @work.call(archive, document)
-			archive.move_document(document.id, next_location) if next_location
+			archive.move_document(document.id, next_location || @location)
 		rescue => error
-			puts error
-			puts Thread.current.backtrace()
+			puts "#{@location} ERROR: #{error}"
 			archive.move_document(document.id, "error")
 		end
 		

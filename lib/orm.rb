@@ -85,6 +85,10 @@ class SQLiteContext
 		return result
 	end
 
+	def execute(query, *args)
+		@db.execute(query, args)
+	end
+
 	def get_repo(type)
 		return SQLiteRepository.new(@db, type)
 	end

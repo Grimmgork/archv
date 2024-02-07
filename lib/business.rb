@@ -170,6 +170,11 @@ module DocumentManager
 		end
 	end
 
+	def search_document_transcript()
+		repo = get_repo(Document)
+		
+	end
+
 	def free_document(id)
 		transaction() do
 			repo = get_repo(Document)

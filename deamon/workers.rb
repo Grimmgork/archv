@@ -1,10 +1,6 @@
 require 'tempfile'
 require './deamon/tesseract.rb'
 
-"input" do |arch, doc|
-	return "ocr"
-end
-
 "ocr" do |arch, doc|
 	attachments = arch.get_attachments_where({ 
 		"where" => ["and", 
