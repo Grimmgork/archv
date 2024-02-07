@@ -1,4 +1,3 @@
-require 'yaml'
 require_relative '../lib/business.rb'
 require_relative './worker.rb'
 

@@ -33,8 +33,48 @@ module AttachmentManager
 		repo.delete(id)
 	end
 
+	def create_attachment_from_file(path, page: 0, doc_id: 0, name: nil)
+		begin
+			file = File.open(path, "rb")
+			data = file.read()
+		ensure
+			file.close()
+		end
+		create_attachment(name || File.basename(path), data: data, page: page, doc_id: doc_id)
+	end
+
+	def write_attachment_to_file(id, fullpath: nil, dir: nil)
+		attachment = transaction() do
+			repo = get_repo(Attachment)
+			attachment = repo.get_by_id(id)
+			if not attachment
+				raise "attachment with id #{id} does not exist!"
+			end
+			attachment.data = repo.load_property(attachment, :data)
+			attachment
+		end
+
+		path = nil
+		if fullpath
+			path = fullpath
+		else
+			path = File.join(dir, attachment.name)
+		end
+
+		if File.exist?(path)
+			raise "file '#{path}' already exists!"
+		end
+
+		begin
+			file = File.open(path, "wb")
+			file.write(attachment.data)
+		ensure
+			file.close() if file
+		end
+	end
+
 	def create_attachment(name, data: nil, page: 0, doc_id: 0)
-		raise "name cannot be empty!" if not name
+		raise "invalid name '#{name}'!" if not name =~ /^[a-zA-z0-9_.-]+$/
 		raise "page cannot be negative!" if page < 0
 		transaction() do
 			repo = get_repo(Attachment)
@@ -96,8 +136,6 @@ module AttachmentManager
 		repo = get_repo(Attachment)
 		attachment = repo.get_by_id(id)
 		return repo.load_property(attachment, :data).force_encoding(Encoding::UTF_8)
-		# puts attachment.data.length
-		# return attachment.data
 	end
 end
 

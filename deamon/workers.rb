@@ -22,16 +22,10 @@ end
 		raise "no suitable attachments for ocr on document #{doc.id}!"
 	end
 
-	# create temp files from data
+	# write attachments data to tempfiles
   	paths = attachments.map { |attch|
 		path = Dir::Tmpname.create(['attch', ".#{attch.name}"]) {}
-		data = arch.read_attachment_data(attch.id)
-		if not data
-			raise "attachments data is empty #{attch.id}!"
-		end
-		file = File.open(path, "wb")
-		file.write(data)
-		file.close()
+		arch.write_attachment_to_file(attch.id, fullpath: path)
 		path
   	}
 
@@ -39,14 +33,9 @@ end
 	tess = Tesseract.new(paths)
 	out = tess.run(lang: 'deu')
         
-    # load result files into database
-	file = File.open("#{out}.pdf", "rb")
-	arch.create_attachment("#{out}.pdf", data: file.read, doc_id: doc.id)
-	file.close
-
-	file = File.open("#{out}.txt", "rb")
-	arch.create_attachment("#{out}.txt", data: file.read, doc_id: doc.id)
-	file.close
+    # load result files as attachments
+	arch.create_attachment_from_file("#{out}.pdf", doc_id: doc.id, name: "ocr.pdf")
+	arch.create_attachment_from_file("#{out}.txt", doc_id: doc.id, name: "ocr.txt")
 
 	# clean up
 	tess.close()
