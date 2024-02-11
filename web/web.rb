@@ -10,20 +10,21 @@ class App < Roda
 	plugin :halt
 	plugin :request_headers
 	plugin :json_parser
+	plugin :render, escape: true
 	route do |r|
 		new_archive() do |archive|
-			r.get "document", Integer do |id|
+			r.get "api", "document", Integer do |id|
 				document = archive.get_document_by_id(id)
 				r.halt(404) if not document
 				document
 			end
 
-			r.get "document", "query" do
+			r.get "api", "document", "query" do
 				query = parse_simple_query(r.params)
 				archive.get_documents_where(query)
 			end
 
-			r.post "document", Integer do |id|
+			r.post "api", "document", Integer do |id|
 				document = archive.get_document_by_id(id)
 				r.halt(404) if not document
 				update_from_hash(document, r.params, :title)
@@ -31,7 +32,7 @@ class App < Roda
 				r.halt(200)
 			end
 
-			r.post "document", Integer, "move" do |id|
+			r.post "api", "document", Integer, "move" do |id|
 				location = r.params["location"]
 				if not location
 					r.halt(400)
@@ -40,7 +41,7 @@ class App < Roda
 				r.halt(200)
 			end
 
-			r.post "document", Integer, "attach" do |id|
+			r.post "api", "document", Integer, "attach" do |id|
 				page = r.params["page"].to_i
 				if page == nil or page < 0
 					page = 0
@@ -54,18 +55,18 @@ class App < Roda
 			end
 
 
-			r.get "attachment", "query" do
+			r.get "api", "attachment", "query" do
 				query = parse_simple_query(r.params)
 				archive.get_attachments_where(query)
 			end
 
-			r.get "attachment", Integer do |id|
+			r.get "api", "attachment", Integer do |id|
 				attachment = archive.get_attachment_by_id(id)
 				r.halt(404) if not attachment
 				attachment
 			end
 
-			r.get "attachment", Integer, "data" do |id|
+			r.get "api", "attachment", Integer, "data" do |id|
 				attachment = archive.get_attachment_by_id(id)
 				r.halt(404) if not attachment
 				data = archive.read_attachment_data(id)
@@ -76,7 +77,7 @@ class App < Roda
 				r.halt(200, headers, data)
 			end
 
-			r.post "attachment", Integer do |id|
+			r.post "api", "attachment", Integer do |id|
 				attachment = archive.get_attachment_by_id(id)
 				r.halt(404) if not attachment
 				update_from_hash(attachment, r.params, :name, :page)
@@ -84,10 +85,15 @@ class App < Roda
 				r.halt(200)
 			end
 
-			r.delete "attachment", Integer do |id|
-				archive.delete_attachment(id)
-				r.halt(200)
+			r.get "ui" do
+				@title = "kek"
+				view("index")
 			end
+
+			# r.delete "attachment", Integer do |id|
+			# 	archive.delete_attachment(id)
+			# 	r.halt(200)
+			# end
 		end
 	end
 
