@@ -127,7 +127,7 @@ class App < Roda
 
 	def update_from_hash(entity, hash, *properties)
 		properties.each { |prop|
-			entity.send(prop, hash[prop.so_s]) if hash.contains?(prop.to_s)
+			entity[prop] = hash[prop.to_s] if hash.key?(prop.to_s)
 		}
 		entity
 	end

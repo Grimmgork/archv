@@ -3,7 +3,7 @@ require_relative 'orm.rb'
 class Document
  	include Entity
  	table "documents"
- 	property :id
+ 	property :id, :primary
  	property :title
  	property :timestamp
  	property :location
@@ -14,10 +14,9 @@ end
 class Attachment
  	include Entity
  	table "attachments"
- 	property :id
+ 	property :id, :primary
  	property :name
  	property :sz
- 	property :data, true
  	property :page
 	property :mtime
  	property :doc_id

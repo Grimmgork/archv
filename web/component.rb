@@ -9,30 +9,29 @@ class Component
 	def erb(template)
 		res = ERB.new(template).run(get_binding)
 		@stack.push(res)
+		res
 	end
 
-	def comp(component=nil)
-		if not component
-			# evaluate
-			component = @stack.pop
-			@stack.push(*component.render())
-			return @stack
-		end
+	def comp(component, &block)
 		@stack.push(component)
+		block.call
+		# evaluate
+		component = @stack.pop
+		res = component.render()
+		@stack.push(*res)
+		@stack
 	end
 
-	def slot(name=nil)
-		if not name
-			erbs = pop_until @stack do |value|
-				value.is_a? Symbol
-			end
-			name = @stack.pop
-			# evaluate
-			component = @stack.last
-			component.instance_variable_set("@#{name}", erbs)
-			return
-		end
+	def slot(name, &block)
+		component = @stack.last
 		@stack.push(name)
+		block.call
+		erbs = pop_until @stack do |value|
+			value.is_a? Symbol
+		end
+		name = @stack.pop
+		# evaluate
+		component.instance_variable_set("@#{name}", erbs)
 	end
 
 	def pop_until(stack, &block)
@@ -50,9 +49,12 @@ class Component
 		}
 		res
 	end
+end
 
-	def get_binding
-		binding
+class Snippet < Component
+	def initialize(&block)
+		super()
+		instance_eval(&block)
 	end
 end
 
@@ -78,10 +80,11 @@ class LayoutComponent < Component
 	def render()
 		erb <<-ERB
 			<div>
-				<p>layout</p>
+				<p>Layout Component</p>
 				<div>
 					<%= @content %>
 				</div>
+				
 			</div>
 		ERB
 	end
@@ -99,11 +102,11 @@ class RootComponent < Component
 			</div>
 			<div>
 		ERB
-		comp LayoutComponent.new()
-			slot :content
-				comp NameComponent.new("World")
-			slot
-		comp
+		comp LayoutComponent.new() do
+			slot :content do
+				erb "<div>test</div>\n"
+			end
+		end
 		erb <<-ERB
 			</div>
 		ERB
@@ -111,4 +114,12 @@ class RootComponent < Component
 end
 
 
-puts RootComponent.new().render()
+RootComponent.new().render() do |chunk| 
+	puts chunk
+end
+
+kek = "lel"
+Snippet.new do 
+	erb "asdfgg"
+	erb kek
+end

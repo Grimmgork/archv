@@ -4,6 +4,7 @@ module AttachmentManager
 	def get_attachment_by_id(id)
 		repo = get_repo(Attachment)
 		attachment = repo.get_by_id(id)
+		puts attachment.to_h
 		return attachment
 	end
 
@@ -50,7 +51,6 @@ module AttachmentManager
 			if not attachment
 				raise "attachment with id #{id} does not exist!"
 			end
-			attachment.data = repo.load_property(attachment, :data)
 			attachment
 		end
 
@@ -102,14 +102,14 @@ module AttachmentManager
 		end
 	end
 
-	def update_attachment(update)
+	def update_attachment(attachment)
 		transaction() do
 			repo = get_repo(Attachment)
-			attachment = repo.get_by_id(update.id)
-			raise "name cannot be empty!" if update.name == nil or update.name == ""
-			attachment.name = update.name
-			raise "page cannot be negative!" if update.page < 0
-			attachment.page = update.page
+			attachment = repo.get_by_id(attachment.id)
+			raise "name cannot be empty!" if attachment.name == nil or attachment.name == ""
+			attachment.name = attachment.name
+			raise "page cannot be negative!" if attachment.page < 0
+			attachment.page = attachment.page
 			repo.update(attachment)
 		end
 	end
@@ -126,16 +126,15 @@ module AttachmentManager
 			repo = get_repo(Attachment)
 			attachment = repo.get_by_id(id)
 			attachment.sz = blob.length
-			attachment.data = blob
 			attachment.mtime = Time.now.to_i
-			repo.update(attachment, :data)
+			repo.update(attachment)
+			repo.write_property(id, :data, blob)
 		end
 	end
 
 	def read_attachment_data(id)
 		repo = get_repo(Attachment)
-		attachment = repo.get_by_id(id)
-		return repo.load_property(attachment, :data).force_encoding(Encoding::UTF_8)
+		repo.read_property(id, :data)
 	end
 end
 
@@ -170,9 +169,12 @@ module DocumentManager
 		end
 	end
 
-	def search_document_transcript()
-		repo = get_repo(Document)
-		
+	def search_document_transcript(keyword)
+		res = @context.execute("SELECT id, doc_id FROM #{Attachment.get_table} WHERE name=? AND data LIKE ?;", "ocr.txt", "%#{keyword}%")
+		res.each do |row|
+			puts row
+		end
+		# repo = get_repo(Document)
 	end
 
 	def free_document(id)
