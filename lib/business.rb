@@ -102,14 +102,14 @@ module AttachmentManager
 		end
 	end
 
-	def update_attachment(attachment)
+	def update_attachment(update)
 		transaction() do
 			repo = get_repo(Attachment)
-			attachment = repo.get_by_id(attachment.id)
-			raise "name cannot be empty!" if attachment.name == nil or attachment.name == ""
-			attachment.name = attachment.name
+			attachment = repo.get_by_id(update.id)
+			attachment.name = update.name
+			attachment.page = update.page
 			raise "page cannot be negative!" if attachment.page < 0
-			attachment.page = attachment.page
+			raise "name cannot be empty!" if attachment.name == nil or attachment.name == ""
 			repo.update(attachment)
 		end
 	end
@@ -248,11 +248,9 @@ class Archive
 	end
 
 	def transaction(&block)
-		result = "nothin"
 		@context.transaction do
-			result = block.call
+			block.call
 		end
-		result
 	end
 
 	def close()

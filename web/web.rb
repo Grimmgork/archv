@@ -27,7 +27,7 @@ class App < Roda
 			r.post "api", "document", Integer do |id|
 				document = archive.get_document_by_id(id)
 				r.halt(404) if not document
-				update_from_hash(document, r.params, :title)
+				update_from_hash(document, r.params, [:title])
 				archive.update_document(document)
 				r.halt(200)
 			end
@@ -54,7 +54,6 @@ class App < Roda
 				att_id.to_s
 			end
 
-
 			r.get "api", "attachment", "query" do
 				query = parse_simple_query(r.params)
 				archive.get_attachments_where(query)
@@ -80,7 +79,7 @@ class App < Roda
 			r.post "api", "attachment", Integer do |id|
 				attachment = archive.get_attachment_by_id(id)
 				r.halt(404) if not attachment
-				update_from_hash(attachment, r.params, :name, :page)
+				update_from_hash(attachment, r.params, [:name, :page])
 				archive.update_attachment(attachment)
 				r.halt(200)
 			end
@@ -125,10 +124,12 @@ class App < Roda
 		params
 	end
 
-	def update_from_hash(entity, hash, *properties)
-		properties.each { |prop|
-			entity[prop] = hash[prop.to_s] if hash.key?(prop.to_s)
-		}
+	def update_from_hash(entity, hash, properties)
+		properties.each do |prop|
+			if hash.key?(prop.to_s)
+				entity[prop] = hash[prop.to_s]
+			end
+		end
 		entity
 	end
 end
