@@ -1,92 +1,50 @@
 require 'erb'
 
-class Component
-
-	def initialize
-		@stack = []
+class Builder
+	def div(&block)
+		@stack.append "<div>"
+		instance_exec(&block)
+		@stack.append "</div>"
 	end
 
-	def erb(template)
-		res = ERB.new(template).run(get_binding)
-		@stack.push(res)
-		res
+	def raw(text)
+		@stack.append(text)
 	end
 
-	def comp(component, &block)
-		@stack.push(component)
-		block.call
-		# evaluate
-		component = @stack.pop
-		res = component.render()
-		@stack.push(*res)
-		@stack
+	def esc(text)
+		@stack.append(CGI::escapeHTML(text))
+	end
+
+	def stack=(stack)
+		@stack = stack
+	end
+
+	def comp(type, &block)
+		comp = type.new()
+		comp.stack = @stack
+		comp.instance_exec(&block)
+		comp.render
+	end
+
+	def self.run(&block)
+		builder = Builder.new()
+		builder.stack = []
+		builder.instance_exec(&block)
+	end
+end
+
+class Component < Builder
+	def initialize()
+		@slots = {}
+		super
 	end
 
 	def slot(name, &block)
-		component = @stack.last
-		@stack.push(name)
-		block.call
-		erbs = pop_until @stack do |value|
-			value.is_a? Symbol
-		end
-		name = @stack.pop
-		# evaluate
-		component.instance_variable_set("@#{name}", erbs)
+		@slots[name] = block
 	end
 
-	def pop_until(stack, &block)
-		result = []
-		while not block.call(stack.last) do
-			result.unshift(stack.pop)
-		end
-		result
-	end
-
-	def finalize
-		res = ""
-		@stack.each { |item|
-			res << item.to_s
-		}
-		res
-	end
-end
-
-class Snippet < Component
-	def initialize(&block)
-		super()
-		instance_eval(&block)
-	end
-end
-
-class NameComponent < Component
-	def initialize(name)
-		super()
-		@name = name
-	end
-
-	def render
-		erb <<-ERB 
-			<h1>Hello, <%= @name %>!</h1> 
-		ERB
-	end
-end
-
-
-class LayoutComponent < Component
-	def initialize()
-		super()
-	end
-
-	def render()
-		erb <<-ERB
-			<div>
-				<p>Layout Component</p>
-				<div>
-					<%= @content %>
-				</div>
-				
-			</div>
-		ERB
+	def render_slot(name)
+		instance_exec(&@slots[name])
 	end
 end
 
@@ -95,31 +53,27 @@ class RootComponent < Component
 		super
 	end
 
-	def render()
-		erb <<-ERB
-			<div>
-				<h1>Main Layout!</h1>
-			</div>
-			<div>
-		ERB
-		comp LayoutComponent.new() do
-			slot :content do
-				erb "<div>test</div>\n"
-			end
-		end
-		erb <<-ERB
-			</div>
-		ERB
+	def render
+		raw "start"
+		render_slot :content
+		raw "end"
 	end
 end
 
 
-RootComponent.new().render() do |chunk| 
-	puts chunk
+res = Builder.run do 
+ 	a = "kek"
+ 	esc a
+ 	div do
+		raw "hello world!"
+ 		div do
+ 			comp RootComponent do
+				slot :content do
+					raw "content"
+				end
+ 			end
+ 		end
+	end
 end
 
-kek = "lel"
-Snippet.new do 
-	erb "asdfgg"
-	erb kek
-end
+puts res

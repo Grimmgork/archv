@@ -1,6 +1,12 @@
 require 'set'
 require 'sqlite3'
 
+class Property
+	def initialize(type, name, lazy)
+		
+	end
+end
+
 module Entity
 	def self.included(base)
 		def [](symbol)

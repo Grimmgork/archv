@@ -4,7 +4,6 @@ module AttachmentManager
 	def get_attachment_by_id(id)
 		repo = get_repo(Attachment)
 		attachment = repo.get_by_id(id)
-		puts attachment.to_h
 		return attachment
 	end
 
@@ -169,12 +168,24 @@ module DocumentManager
 		end
 	end
 
-	def search_document_transcript(keyword)
-		res = @context.execute("SELECT id, doc_id FROM #{Attachment.get_table} WHERE name=? AND data LIKE ?;", "ocr.txt", "%#{keyword}%")
+	def query_document_transcript(keyword)
+		query = <<~END
+			SELECT attachments.id, attachments.name, attachments.page, documents.id, documents.title
+			FROM attachments LEFT JOIN documents
+			ON attachments.doc_id = documents.id
+			WHERE attachments.name=? AND attachments.data LIKE ?;
+		END
+		res = @context.execute(query, "ocr.txt", "%#{keyword}%")
+
 		res.each do |row|
-			puts row
+			hash = {}
+			hash["att_id"]    = row[0]
+			hash["att_name"]  = row[1]
+			hash["att_page"]  = row[2]
+			hash["doc_id"]    = row[3]
+			hash["doc_title"] = row[4]
+			yield hash
 		end
-		# repo = get_repo(Document)
 	end
 
 	def free_document(id)
@@ -194,10 +205,10 @@ module DocumentManager
 			document = doc_repo.get_by_id(id)
 			raise "document with id '#{id}' does not exist!" if not document
 			attachments = att_repo.where("doc_id=?", id)
-			attachments.each { |att|
+			attachments.each do |att|
 				att.doc_id = 0
 				att_repo.update(att)
-			}
+			end
 			doc_repo.delete(id)
 		end
 	end
@@ -256,4 +267,9 @@ class Archive
 	def close()
 		@context.close()
 	end
+end
+
+arch = Archive.new("data.db")
+arch.query_document_transcript("Eric") do |row|
+	puts row
 end
