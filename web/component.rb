@@ -2,22 +2,24 @@ require 'erb'
 
 class Builder
 
-	def tag(symbol, *args, &block)
+	def tag(symbol, attributes={}, &block)
 		if block_given?
-			raw "<#{symbol}>"
+			raw "<#{symbol} #{hash_to_attributes(attributes)}>"
 			instance_exec(&block)
 			raw "</#{symbol}>"
 		else
-			raw "<#{symbol}>"
+			raw "<#{symbol} #{hash_to_attributes(attributes)}>"
 		end
 	end
 
-	def a(href, &block)
-
-	end
-
-	def div(&block)
-		tag("div", &block)
+	def hash_to_attributes(hash)
+		result = ""
+		attributes = hash.keys.map do |name|
+			value = hash[name]
+			next if value == nil or value == ""
+			"#{name}=\"#{CGI::escapeHTML(value)}\""
+		end
+		attributes.compact.join(" ")
 	end
 
 	def raw(text)
@@ -28,22 +30,28 @@ class Builder
 		@stack.append(CGI::escapeHTML(text))
 	end
 
-	def p(&block)
-		tag("p", &block)
+	def p(**attributes, &block)
+		method_missing("p", **attributes, &block)
+	end
+
+	def method_missing(m, **attributes, &block)
+		classes = m.to_s.split("_")
+		name = classes[0]
+		classes.shift
+
+		classes += attributes[:class] if attributes[:class] != nil
+		attributes[:class] = "#{classes.join(" ")}"
+
+		tag(name, attributes, &block)
 	end
 
 	def stack=(stack)
 		@stack = stack
 	end
 
-	def indent=(indent)
-		@indent = indent
-	end
-
 	def comp(type, &block)
 		comp = type.new()
 		comp.stack = @stack
-		comp.indent = @indent
 		comp.instance_exec(&block) if block_given?
 		comp.render
 	end
@@ -51,7 +59,6 @@ class Builder
 	def self.run(&block)
 		builder = Builder.new()
 		builder.stack = []
-		builder.indent = 0
 		builder.instance_exec(&block)
 	end
 end
@@ -90,9 +97,10 @@ res = Builder.run do
  		div do
  			comp RootComponent do
 				slot :content do
-					a "/test.html" do
-						"klick me ..."
+					a href: "/test.html" do
+						esc "klick me ..."
 					end
+					div_lel lel: "asdf <>", class: ["asdf lel"]
 				end
 			end
  		end
