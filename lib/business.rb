@@ -268,8 +268,3 @@ class Archive
 		@context.close()
 	end
 end
-
-arch = Archive.new("data.db")
-arch.query_document_transcript("Eric") do |row|
-	puts row
-end
