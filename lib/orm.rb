@@ -1,12 +1,6 @@
 require 'set'
 require 'sqlite3'
 
-class Property
-	def initialize(type, name, lazy)
-		
-	end
-end
-
 module Entity
 	def self.included(base)
 		def [](symbol)
@@ -115,6 +109,7 @@ class SQLiteContext
 			@db.execute("ROLLBACK;")
 			raise
 		end
+
 		@db.execute("COMMIT;")
 		return result
 	end
@@ -163,6 +158,7 @@ class SQLiteRepository
 
 	def create()
 		entity = @entity_type.new()
+		hash = entity.to_h
 		@context.execute("INSERT INTO #{@tablename} (#{@entity_type.get_properties().join(",")}) VALUES(#{Array.new(hash.keys.length){"?"}.join(",")});", hash.values)
 		return @context.last_insert_row_id
 	end
@@ -184,6 +180,18 @@ class SQLiteRepository
 		sql = "SELECT #{@entity_type.get_properties().join(",")} FROM #{@tablename} WHERE (#{parse_expr(where, args)}) #{sql_sort(sort, args)} #{sql_pagination(skip, take, args)};"
 		entities = @context.query_type(@entity_type, lazy, sql, args)
 		return entities
+	end
+
+	
+	def update(entity, *lazy)
+		hash = entity.to_h(*lazy)
+		setters = hash.keys.map { |prop| "#{prop}=?" }
+		id = entity.send(@primary_key)
+		@context.execute("UPDATE #{@tablename} SET #{setters.join(",")} WHERE #{@primary_key}=?;", hash.values.append(id))
+	end
+
+	def delete(id)
+		@context.execute("DELETE FROM #{@tablename} WHERE #{@primary_key}=?;", id)
 	end
 
 	def read_property(id, prop)
@@ -214,17 +222,6 @@ class SQLiteRepository
 		}
 		sql += statements.join(", ")
 		return sql
-	end
-
-	def update(entity, *lazy)
-		hash = entity.to_h(*lazy)
-		setters = hash.keys.map { |prop| "#{prop}=?" }
-		id = entity.send(@primary_key)
-		@context.execute("UPDATE #{@tablename} SET #{setters.join(",")} WHERE #{@primary_key}=?;", hash.values.append(id))
-	end
-
-	def delete(id)
-		@context.execute("DELETE FROM #{@tablename} WHERE #{@primary_key}=?;", id)
 	end
 
 	def prop_safe(name)

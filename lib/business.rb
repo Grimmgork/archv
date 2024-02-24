@@ -9,12 +9,12 @@ module AttachmentManager
 
 	def get_attachments_for_document(doc_id)
 		repo = get_repo(Attachment)
-		attachments = repo.where({ "where" => ["eq", ["prop", "doc_id"], doc_id] })
+		attachments = repo.where({ "where" => ["like", ["prop", "name"], "/#{doc_id}/%"] })
 		return attachments
 	end
 
 	def attach_attachment_to_document(id, doc_id)
-		transaction() do
+		@context.transaction() do
 			repo = get_repo(Attachment)
 			attachment = repo.get_by_id(id)
 			attachment.doc_id = doc_id
@@ -44,7 +44,7 @@ module AttachmentManager
 	end
 
 	def write_attachment_to_file(id, fullpath: nil, dir: nil)
-		attachment = transaction() do
+		attachment = @context.transaction() do
 			repo = get_repo(Attachment)
 			attachment = repo.get_by_id(id)
 			if not attachment
@@ -75,7 +75,7 @@ module AttachmentManager
 	def create_attachment(name, data: nil, page: 0, doc_id: 0)
 		raise "invalid name '#{name}'!" if not name =~ /^[a-zA-z0-9_.-]+$/
 		raise "page cannot be negative!" if page < 0
-		transaction() do
+		@context.transaction() do
 			repo = get_repo(Attachment)
 			id = repo.create()
 			attachment = repo.get_by_id(id)
@@ -102,7 +102,7 @@ module AttachmentManager
 	end
 
 	def update_attachment(update)
-		transaction() do
+		@context.transaction() do
 			repo = get_repo(Attachment)
 			attachment = repo.get_by_id(update.id)
 			attachment.name = update.name
@@ -121,7 +121,7 @@ module AttachmentManager
 	end
 
 	def write_attachment_data(id, blob)
-		transaction() do
+		@context.transaction() do
 			repo = get_repo(Attachment)
 			attachment = repo.get_by_id(id)
 			attachment.sz = blob.length
@@ -139,12 +139,12 @@ end
 
 module DocumentManager
 	def create_document(title)
-		transaction() do
+		@context.transaction() do
 			timestamp = Time.now.to_i
 			repo = get_repo(Document)
 			id = repo.create()
 			document = repo.get_by_id(id)
-			document.title = title
+			document.title = title || timestamp.to_s
 			document.timestamp = timestamp
 			document.location = "new"
 			document.last_moved = timestamp
@@ -155,7 +155,7 @@ module DocumentManager
 	end
 
 	def try_take_document(id)
-		transaction() do
+		@context.transaction() do
 			repo = get_repo(Document)
 			document = repo.get_by_id(id)
 			raise "document with id '#{id}' does not exist!" if not document
@@ -189,7 +189,7 @@ module DocumentManager
 	end
 
 	def free_document(id)
-		transaction() do
+		@context.transaction() do
 			repo = get_repo(Document)
 			document = repo.get_by_id(id)
 			raise "document with id '#{id}' does not exist!" if not document
@@ -199,7 +199,7 @@ module DocumentManager
 	end
 
 	def delete_document(id)
-		transaction() do
+		@context.transaction() do
 			doc_repo = get_repo(Document)
 			att_repo = get_repo(Attachment)
 			document = doc_repo.get_by_id(id)
@@ -214,7 +214,7 @@ module DocumentManager
 	end
 
 	def update_document(update)
-		transaction() do
+		@context.transaction() do
 			repo = get_repo(Document)
 			document = repo.get_by_id(update.id)
 			document.title = update.title
@@ -236,7 +236,7 @@ module DocumentManager
 	end
 
 	def move_document(id, location)
-		transaction() do
+		@context.transaction() do
 			repo = get_repo(Document)
 			document = repo.get_by_id(id)
 			document.location = location
@@ -256,12 +256,6 @@ class Archive
 
 	def get_repo(type)
 		@context.get_repo(type)
-	end
-
-	def transaction(&block)
-		@context.transaction do
-			block.call
-		end
 	end
 
 	def close()

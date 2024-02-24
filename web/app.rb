@@ -5,7 +5,7 @@ require './component.rb'
 
 # CONFIG
 class App < Roda
-	plugin :json, classes: [Array, Hash, Document, Attachment]
+	plugin :json, classes: [Array, Hash, Document, Attachment, Integer]
 	plugin :halt
 	plugin :request_headers
 	plugin :json_parser
@@ -45,6 +45,11 @@ class App < Roda
 			end
 			archive.move_document(id, location)
 			r.halt(200)
+		end
+
+		r.post "api", "document", "create" do
+			title = r.params["location"]
+			archive.create_document(title)
 		end
 
 		r.post "api", "document", Integer, "attach" do |id|
