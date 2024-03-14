@@ -19,11 +19,11 @@ require './deamon/tesseract.rb'
 	end
 
 	# write attachments data to tempfiles
-  	paths = attachments.map { |attch|
+  	paths = attachments.map do |attch|
 		path = Dir::Tmpname.create(['attch', ".#{attch.name}"]) {}
 		arch.write_attachment_to_file(attch.id, fullpath: path)
 		path
-  	}
+	end
 
 	# run tesseract on tempfiles
 	tess = Tesseract.new(paths)

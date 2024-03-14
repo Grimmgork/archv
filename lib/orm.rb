@@ -182,7 +182,6 @@ class SQLiteRepository
 		return entities
 	end
 
-	
 	def update(entity, *lazy)
 		hash = entity.to_h(*lazy)
 		setters = hash.keys.map { |prop| "#{prop}=?" }

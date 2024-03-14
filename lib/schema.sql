@@ -7,6 +7,11 @@ CREATE TABLE IF NOT EXISTS sqlar (
 	page INTEGER DEFAULT 0
 );
 
+-- name.pdf
+-- size
+-- page
+-- doc_id
+
 CREATE TABLE IF NOT EXISTS document (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	title TEXT,

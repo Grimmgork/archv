@@ -1,10 +1,16 @@
 require_relative 'domain.rb'
 
-module AttachmentManager
+module Queries
 	def get_attachment_by_id(id)
 		repo = get_repo(Attachment)
 		attachment = repo.get_by_id(id)
 		return attachment
+	end
+
+	def get_attachments_where(query)
+		repo = get_repo(Attachment)
+		attachments = repo.where(query)
+		return attachments
 	end
 
 	def get_attachments_for_document(doc_id)
@@ -13,6 +19,42 @@ module AttachmentManager
 		return attachments
 	end
 
+	def read_attachment_data(id)
+		repo = get_repo(Attachment)
+		repo.read_property(id, :data)
+	end
+
+	def get_document_by_id(id)
+		repo = get_repo(Document)
+		repo.get_by_id(id)
+	end
+
+	def get_documents_where(query)
+		@context.transaction() do
+			repo = get_repo(Document)
+			documents = repo.where(query)
+			documents
+		end
+	end
+
+	def query_document_transcript(keyword)
+		Match = Data.define(:att_name, :att_page, :doc_id, :doc_title)
+		query = <<~END
+			SELECT attachments.name, attachments.page, documents.id, documents.title
+			FROM attachments LEFT JOIN documents
+			ON attachments.doc_id = documents.id
+			WHERE attachments.name=? AND attachments.data LIKE ?;
+		END
+		res = @context.execute(query, "ocr.txt", "%#{keyword}%")
+
+		res.each do |row|
+			att_name = row[0].split("/").reject({|s| s == ""})[1]
+			yield Match.new(att_name, row[1], row[2], row[3])
+		end
+	end
+end
+
+module AttachmentManager
 	def attach_attachment_to_document(id, doc_id)
 		@context.transaction() do
 			repo = get_repo(Attachment)
@@ -20,12 +62,6 @@ module AttachmentManager
 			attachment.doc_id = doc_id
 			repo.update(attachment)
 		end
-	end
-
-	def get_attachments_where(query)
-		repo = get_repo(Attachment)
-		attachments = repo.where(query)
-		return attachments
 	end
 
 	def delete_attachment(id)
@@ -130,11 +166,6 @@ module AttachmentManager
 			repo.write_property(id, :data, blob)
 		end
 	end
-
-	def read_attachment_data(id)
-		repo = get_repo(Attachment)
-		repo.read_property(id, :data)
-	end
 end
 
 module DocumentManager
@@ -165,26 +196,6 @@ module DocumentManager
 			document.taken = 1
 			repo.update(document)
 			true
-		end
-	end
-
-	def query_document_transcript(keyword)
-		query = <<~END
-			SELECT attachments.id, attachments.name, attachments.page, documents.id, documents.title
-			FROM attachments LEFT JOIN documents
-			ON attachments.doc_id = documents.id
-			WHERE attachments.name=? AND attachments.data LIKE ?;
-		END
-		res = @context.execute(query, "ocr.txt", "%#{keyword}%")
-
-		res.each do |row|
-			hash = {}
-			hash["att_id"]    = row[0]
-			hash["att_name"]  = row[1]
-			hash["att_page"]  = row[2]
-			hash["doc_id"]    = row[3]
-			hash["doc_title"] = row[4]
-			yield hash
 		end
 	end
 
@@ -222,18 +233,6 @@ module DocumentManager
 		end
 	end
 
-	def get_documents_where(query)
-		@context.transaction() do
-			repo = get_repo(Document)
-			documents = repo.where(query)
-			documents
-		end
-	end
-
-	def get_document_by_id(id)
-		repo = get_repo(Document)
-		repo.get_by_id(id)
-	end
 
 	def move_document(id, location)
 		@context.transaction() do
@@ -249,6 +248,7 @@ end
 class Archive
 	include AttachmentManager
 	include DocumentManager
+	include Queries
 
 	def initialize(path)
 		@context = SQLiteContext.new(path)

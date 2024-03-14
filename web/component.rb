@@ -3,13 +3,13 @@ require 'erb'
 class Builder
 
 	def tag(symbol, attributes={}, &block)
-		if block_given?
-			unsafe "<#{symbol} #{hash_to_attributes(attributes)}>"
-			instance_exec(&block)
-			unsafe "</#{symbol}>"
-		else
-			unsafe "<#{symbol} #{hash_to_attributes(attributes)}>"
-		end
+		unsafe "<#{symbol}#{hash_to_attributes(attributes)}>"
+		instance_exec(&block) if block_given?
+		unsafe "</#{symbol}>"
+	end
+
+	def inline(symbol, attributes={}, &block)
+		unsafe "<#{symbol}#{hash_to_attributes(attributes)}></#{symbol}>"
 	end
 
 	def hash_to_attributes(hash)
@@ -17,36 +17,53 @@ class Builder
 		attributes = hash.keys.map do |name|
 			value = hash[name]
 			next if value == nil or value == ""
-			"#{name}=\"#{CGI::escapeHTML(value)}\""
+			result << " #{name.to_s.gsub('_', '-')}=\"#{CGI::escapeHTML(value)}\""
 		end
-		attributes.compact.join(" ")
+		result
 	end
 
 	def unsafe(text)
 		@stack.append(text)
 	end
 
+	def script(content)
+		tag("script") do 
+			@stack.append(CGI::escapeHTML(content))
+		end
+	end
+
 	def text(text)
-		@stack.append(CGI::escapeHTML(text))
+		@stack.append(CGI::escapeHTML(text || ""))
+	end
+
+	def span(text=nil, **attributes, &block)
+		if block_given? or not text
+			inline("span", attributes, &block)
+		else
+			inline("span", attributes) do
+				text(text)
+			end
+		end
+	end
+
+	def a(**attributes, &block)
+		inline("a", attributes, &block)
 	end
 
 	def p(**attributes, &block)
-		method_missing("p", **attributes, &block)
+		tag("p", attributes, &block)
 	end
 
 	def method_missing(m, **attributes, &block)
-		classes = m.to_s.split("_")
-		name = classes[0]
-		classes.shift
-
-		classes += attributes[:class] if attributes[:class] != nil
-		attributes[:class] = "#{classes.join(" ")}"
-
-		tag(name, attributes, &block)
+		tag(m, attributes, &block)
 	end
 
 	def stack=(stack)
 		@stack = stack
+	end
+
+	def stack
+		@stack
 	end
 
 	def comp(type, *args, &block)
@@ -56,11 +73,15 @@ class Builder
 		comp.render
 	end
 
-	def self.run(&block)
+	def self.run(type=nil, *args, &block)
 		builder = Builder.new()
 		builder.stack = []
-		res = builder.instance_exec(&block)
-		res.join("\n")
+		if type
+			builder.comp(type, *args, &block)
+		else
+			builder.instance_exec(&block)
+		end
+		builder.stack
 	end
 end
 
@@ -101,15 +122,13 @@ class RootComponent < Component
 	end
 end
 
-res = Builder.run do 
-	comp RootComponent, "Hello there!" do
-		slot :body do
-			a href: "link.html" do
-				text "klick me ..."
+puts(Builder.run do
+	span "text", class: "kek"
+	comp RootComponent, "Hello!" do
+		slot :page do
+			div class: "test asdf", hx_name: "kek" do
+				text "kek!"
 			end
-			div_lel lel: "asdf <>", class: ["asdf lel"]
 		end
 	end
-end
-
-puts res
+end)
