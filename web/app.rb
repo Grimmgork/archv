@@ -1,7 +1,9 @@
 require 'roda'
 require 'json'
+require 'htmplt'
 require '../lib/business.rb'
-require './component.rb'
+
+Contact = Data.define(:name, :email)
 
 # CONFIG
 class App < Roda
@@ -97,11 +99,33 @@ class App < Roda
 
 		r.get "ui" do
 			Builder.run do
-				comp RootComponent, "Hello there!" do
-					slot :page do
-						a href: "link" do
-							text "klick me"
+				html do
+					head do
+						link rel: "stylesheet", href: "/static/style.css"
+					end
+					body do
+						script src: "https://unpkg.com/htmx.org@1.9.11"
+						h1 do
+							text "Hello world!"
 						end
+						div do
+							form do
+								text "name: "
+								input type: "text", name: "name"
+								text "email: "
+								input type: "email", name: "email" 
+							end
+						end
+					end
+				end
+			end
+		end
+
+		r.post "ui", "contacts" do
+			Builder.run do
+				div do
+					b do
+						text "thanks for clicking the button!"
 					end
 				end
 			end

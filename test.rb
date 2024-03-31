@@ -1,93 +1,283 @@
 Attachment = Data.define(:name, :doc_id, :page, :size, :mtime)
 Document = Data.define(:id, :title, :timestamp, :location, :last_moved, :taken)
 
+DocumentAggregate = Data.define(:document, :attachments, :data)
+
 AttachmentQueryMatch = Data.define(:document_id, :document_title, :page, :name)
 
-
 class Context
-	def load(type, &block)
+	def initialize(path)
+		@db = SQLite3::Database.open path
+	end
+
+	def execute(query, *args, &block)
+		@db.execute(query, args) do |row|
+			&block->call(row)
+		end
+	end
+
+	def first(query, *args, &block)
+		@db.get_first_value(query, args)
+	end
+
+	def transaction()
+		@db.execute("BEGIN TRANSACTION;")
+		result = nil
+		begin
+			result = yield()
+		rescue
+			@db.execute("ROLLBACK;")
+			raise
+		end
+
+		@db.execute("COMMIT;")
+		return result
+	end
+
+	def last_insert_row_id
+		@db.last_insert_row_id
+	end
+
+	def close()
+		@db.close()
+	end
+
+	def get_repo(type)
+		if type == Attachment
+			to_row = Proc.new do |obj|
+				[ "/#{obj.doc_id}/#{obj.name}", obj.page, obj.size, obj.mtime ]
+			end
+			from_row = Proc.new do |row|
+				name, doc_id = row[0].split("/").reject { |s| s.nil? || s.empty? }
+				Attachment.new(name, doc_id, row[1], row[2], row[3])
+			end
+			return Repository.new(self, "sqlar", [ "name", "page", "size", "mtime" ], from_row, to_row)
+		end
+
+		if type == Document
+			to_row = Proc.new do |obj|
+				[ obj.id, obj.title, obj.timestamp, obj.location, obj.last_moved, obj.taken ]
+			end
+			from_row = Proc.new do |row|
+				Document.new(row[0], row[1], row[2], row[3], row[4], row[5])
+			end
+			return Repository.new(self, "document", [ "id", "title", "timestamp", "location", "last_moved", "taken" ], from_row, to_row)
+		end
+	end
+end
+
+class Repository
+	def initialize(context, table, primary, fields, from_row, to_row)
+		@context = context
+		@table = table
+		@fields = fields
+		@from_row = from_row
+		@to_row = to_row
+		@primary = fields[0]
+	end
+
+	def read(entity)
+		res = @context.first("SELECT #{@fields.join(",")} FROM #{@table} WHERE #{@primary}=?;", primary_value(entity))
+		return from_row(res)
+	end
+
+	def delete(entity)
+		@context.execute("DELETE FROM #{@table} WHERE #{@primary}=?", primary_value(entity))
+	end
+
+	def update(entity)
+		statements = @fields.select { |field| "#{field}=?" }
+		@context.execute("UPDATE #{@table} SET #{statements.join(",")} WHERE #{@primary}=?;", *to_row(entity).append(primary_value(entity)))
+	end
+
+	def insert(entity)
+		@context.execute("INSERT INTO #{@table} (#{@fields.join(",")}) VALUES(#{Array.new(@fields.length, "?").join(",")});", *to_row(entity))
+		return @context.last_insert_row_id
+	end
+
+	def primary_value(entity)
+		@to_row.call(entity)[0]
+	end
+
+	def to_row(entity)
+		@to_row.call(entity)
+	end
+
+	def from_row(row)
+		@from_row.call(row)
+	end
+end
+
+class Archive
+
+	def initialize(path)
+		@context = Context.new(path)
+	end
+
+	def call(type, *args, &block)
+		command = type.new(@context, *args, &block)
+		command.instance_variable_get()
+		inject_requirements(call)
+		command.call()
+	end
+
+	def close()
+		@context.close()
+	end
+
+	def inject_requirements(obj)
+		type = obj.class
+		type.requirements.each do |name|
+			obj.instance_variable_set("@#{name}", get_requirement(name))
+		end
+	end
+
+	def get_requirement(name)
+		case name
+		when :context
+			@context
+		end
+	end
+end
+
+module Injector
+	def self.included(base)
+		base.class_eval do
+			@@requirements = []
+
+			def self.inject(name)
+				@@requirements.append(name)
+			end
+
+			def self.requirements
+				@@requirements
+			end
+		end
+	end
+end
+
+class Query
+	include Injector
+end
+
+class Command
+	include Injector
+end
+
+class ReadAttachmentData < Query
+	inject(:context)
+
+	def initialize(doc_id, name)
 
 	end
 
-	def where()
-
-	end
-
-	def include(type, name, &block)
-
-	end
-
-	def include_foreign(type, name, &block)
-
-	end
-
-	def exclude(names)
-
-	end
-
-	def find()
-
-	end
-
-	def foreign()
+	def call()
 
 	end
 end
 
+class GetAttachmentById < Query
+	inject(:context)
 
-class DocumentRepository
-	def delete(id)
-
-	end
-
-	def write(document)
+	def initialize(doc_id, name)
 
 	end
 
-	def create(document)
-
-	end
-
-	def get_by_id()
-
-	end
-
-	def get_by_location(query)
+	def call()
 
 	end
 end
 
-class AttachmentRepository
-	def delete(id)
+class KeywordSearch < Query
+	inject(:context)
+
+	def initialize(keyword)
 
 	end
 
-	def write()
-
-	end
-
-	def create(attachment)
-
-	end
-
-	def get_by_id(name)
-
-	end
-
-	def get_by_document(doc_id)
-
-	end
-
-	def write_data(name, length, data)
-
-	end
-
-	def read_data(name)
+	def call()
 
 	end
 end
 
-class Logic
+class GetDocumentsByLocation < Query
+	inject(:context)
+
+	def initialize(location)
+
+	end
+
+	def call()
+
+	end
+end
+
+class GetAttachmentsForDocument < Query
+	inject(:context)
+
+	def initialize(keyword)
+
+	end
+
+	def call()
+
+	end
+end
+
+module Command
+
+	def cmd_rename_attachment(att_id, name)
+		# attachment = attachments.get_by_id()
+		# attachment.
+	end
+	
+	def cmd_move_document(doc_id, location)
+	
+	end
+	
+	def cmd_set_document_title(doc_id, title)
+	
+	end
+	
+	def cmd_create_document()
+	
+	end
+	
+	def cmd_create_attachment(doc_id, name, data, page)
+	
+	end
+	
+	def cmd_reattach_attachment(doc_id, att_name, new_doc_id)
+	
+	end
+	
+	def cmd_write_attachment_data_to_file(doc_id, name, filename)
+	
+	end
+	
+	def cmd_create_attachment_from_file(doc_id, name, filename)
+	
+	end
+	
+	def cmd_get_attachment_data(doc_id, name)
+	
+	end
+	
+	def cmd_write_attachment_data(doc_id, name, data)
+	
+	end
+
+	def cmd_delete_attachment(doc_id, name)
+
+	end
+
+	def cmd_write_attachment_data(doc_id, name, data)
+
+	end
+end
+
+module Logic
+
 	def get_attachment_name(doc_id, name)
 
 	end
@@ -108,62 +298,19 @@ class Logic
 
 	end
 
-	def update_document(attachment, values)
+	def update_document(attachment, title)
 
 	end
 
-	def update_attachment(attachment, values)
+	def move_document(document, location)
+
+	end
+
+	def update_attachment(attachment, page)
 
 	end
 
 	def update_attachment_data(attachment, size)
-
-	end
-end
-
-class Commands
-	def rename_attachment(att_id, name)
-		# attachment = attachments.get_by_id()
-		# attachment.
-	end
-	
-	def move_document(doc_id, location)
-	
-	end
-	
-	def set_document_title(doc_id, title)
-	
-	end
-	
-	def create_document()
-	
-	end
-	
-	def create_attachment(doc_id, name, data, page)
-	
-	end
-	
-	def reattach_attachment(doc_id, att_name, new_doc_id)
-	
-	end
-	
-	def write_attachment_data_to_file(doc_id, name, filename)
-	
-	end
-	
-	def create_attachment_from_file(doc_id, name, filename)
-	
-	end
-	
-	def get_attachment_data(doc_id, name)
-	
-	end
-	
-	def write_attachment_data(doc_id, name, data)
-	
-	end
-
-	def delete_attachment(doc_id, name)
 
 	end
 end

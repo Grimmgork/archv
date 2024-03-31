@@ -38,7 +38,7 @@ module Queries
 	end
 
 	def query_document_transcript(keyword)
-		Match = Data.define(:att_name, :att_page, :doc_id, :doc_title)
+		# Match = Data.define(:att_name, :att_page, :doc_id, :doc_title)
 		query = <<~END
 			SELECT attachments.name, attachments.page, documents.id, documents.title
 			FROM attachments LEFT JOIN documents
@@ -47,10 +47,10 @@ module Queries
 		END
 		res = @context.execute(query, "ocr.txt", "%#{keyword}%")
 
-		res.each do |row|
-			att_name = row[0].split("/").reject({|s| s == ""})[1]
-			yield Match.new(att_name, row[1], row[2], row[3])
-		end
+		# res.each do |row|
+			# att_name = row[0].split("/").reject({|s| s == ""})[1]
+			# yield Match.new(att_name, row[1], row[2], row[3])
+		#end
 	end
 end
 

@@ -28,37 +28,4 @@ class Attachment
 		segments[0] = id.to_s
 		name = segments.join("/")
 	end
-
-	def to_tr()
-		return TableRow
-	end
-
-	def self.from_tr()
-		return Attachment.new()
-	end
-
-	def get_tr_map()
-		return {
-
-		}
-	end
-end
-
-class TableRow
-	def initialize(table, values)
-		
-	end
-end
-
-def data_persist(tablemap)
-
-end
-
-def data_query(type, query)
-
-end
-
-
-def persist(Entity)
-
 end
