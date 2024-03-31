@@ -134,6 +134,8 @@ class Archive
 
 	def get_requirement(name)
 		case name
+		when :archive
+			self
 		when :context
 			@context
 		end
@@ -224,54 +226,136 @@ class GetAttachmentsForDocument < Query
 	end
 end
 
-module Command
+class ReadAttachmentData < Query
+	inject(:context)
 
-	def cmd_rename_attachment(att_id, name)
-		# attachment = attachments.get_by_id()
-		# attachment.
-	end
-	
-	def cmd_move_document(doc_id, location)
-	
-	end
-	
-	def cmd_set_document_title(doc_id, title)
-	
-	end
-	
-	def cmd_create_document()
-	
-	end
-	
-	def cmd_create_attachment(doc_id, name, data, page)
-	
-	end
-	
-	def cmd_reattach_attachment(doc_id, att_name, new_doc_id)
-	
-	end
-	
-	def cmd_write_attachment_data_to_file(doc_id, name, filename)
-	
-	end
-	
-	def cmd_create_attachment_from_file(doc_id, name, filename)
-	
-	end
-	
-	def cmd_get_attachment_data(doc_id, name)
-	
-	end
-	
-	def cmd_write_attachment_data(doc_id, name, data)
-	
-	end
-
-	def cmd_delete_attachment(doc_id, name)
+	def initialize(doc_id, name)
 
 	end
 
-	def cmd_write_attachment_data(doc_id, name, data)
+	def call()
+
+	end
+end
+
+class RenameAttachment < Command
+	inject(:context)
+	inject(:archive) 
+
+	def initialize(doc_id, name)
+
+	end
+
+	def call()
+		@archive.call()
+		@archive.context()
+	end
+end
+
+class MoveDocument < Command
+	inject(:context)
+
+	def initialize(doc_id, location)
+
+	end
+
+	def call()
+
+	end
+end
+
+class SetDocumentTitle < Command
+	inject(:content)
+
+	def initialize(doc_id, title)
+
+	end
+
+	def call()
+
+	end
+end
+
+class CreateNewDocument < Command
+	inject(:content)
+
+	def initialize(title)
+
+	end
+
+	def call()
+
+	end
+end
+
+class CreateNewAttachment < Command
+	inject(:content)
+
+	def initialize(doc_id, name, page, data)
+
+	end
+
+	def call()
+
+	end
+end
+
+class ReattachAttachment < Command
+	inject(:content)
+
+	def initialize(doc_id, att_name, new_doc_id)
+
+	end
+
+	def call()
+
+	end
+end
+
+class WriteAttachmentDataToFile < Command
+	inject(:content)
+
+	def initialize(doc_id, name, filename)
+
+	end
+
+	def call()
+
+	end
+end
+
+class CrateAttachmentFromFile < Command
+	inject(:content)
+
+	def initialize(doc_id, name, filename)
+
+	end
+
+	def call()
+
+	end
+end
+
+class WriteAttachmentData < Command
+	inject(:content)
+
+	def initialize(doc_id, name, data)
+
+	end
+
+	def call()
+
+	end
+end
+
+class DeleteAttachment < Command
+	inject(:content)
+
+	def initialize(doc_id, name)
+
+	end
+
+	def call()
 
 	end
 end

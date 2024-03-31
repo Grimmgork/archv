@@ -11,12 +11,39 @@ class Context
 	end
 end
 
+module Injector
+	def self.included(base)
+		base.class_eval do
+			@@requirements = []
+
+			def self.inject(name)
+				@@requirements.append(name)
+			end
+
+			def self.requirements
+				@@requirements
+			end
+		end
+	end
+end
+
 class Query
 	include Injector
-	inject(:context)
+end
+
+class HelloWorld < Query
+	def initialize(name)
+		@name = name
+	end
+
+	def call()
+		puts "Hello #{@name}!"
+	end
 end
 
 class Command < Query
+	inject(:context)
+	inject(:archive)
 
 	def initialize(arg1, arg2)
 		@arg1 = arg1
@@ -26,6 +53,7 @@ class Command < Query
 	def call()
 		@context.print_stuff()
 		puts "CMD: #{@arg1} #{@arg2}"
+		@archive.call(HelloWorld, "world")
 	end
 end
 
@@ -34,7 +62,7 @@ class Archive
 		@context = Context.new
 	end
 
-	def command(type, *args, &block)
+	def call(type, *args, &block)
 		command = type.new(*args, &block)
 		inject_requirements(command)
 		command.call()
@@ -51,9 +79,11 @@ class Archive
 		case name
 		when :context
 			@context
+		when :archive
+			self
 		end
 	end
 end
 
 archive = Archive.new()
-archive.command(Command, "Hello", "World")
+archive.call(Command, "Hello", "World")
