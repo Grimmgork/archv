@@ -1,10 +1,3 @@
-Attachment = Data.define(:name, :doc_id, :page, :size, :mtime)
-Document = Data.define(:id, :title, :timestamp, :location, :last_moved, :taken)
-
-DocumentAggregate = Data.define(:document, :attachments, :data)
-
-AttachmentQueryMatch = Data.define(:document_id, :document_title, :page, :name)
-
 class Context
 	def initialize(path)
 		@db = SQLite3::Database.open path
@@ -12,7 +5,7 @@ class Context
 
 	def execute(query, *args, &block)
 		@db.execute(query, args) do |row|
-			&block->call(row)
+			block.call(row)
 		end
 	end
 
@@ -63,6 +56,8 @@ class Context
 			end
 			return Repository.new(self, "document", [ "id", "title", "timestamp", "location", "last_moved", "taken" ], from_row, to_row)
 		end
+
+		throw "no repository defined for type #{type}!"
 	end
 end
 
@@ -115,9 +110,9 @@ class Archive
 	end
 
 	def call(type, *args, &block)
-		command = type.new(@context, *args, &block)
-		command.instance_variable_get()
-		inject_requirements(call)
+		command = type.allocate()
+		inject_requirements(command)
+		command.initialize(@context, *args, &block)
 		command.call()
 	end
 
@@ -155,6 +150,48 @@ module Injector
 				@@requirements
 			end
 		end
+	end
+end
+
+Attachment = Data.define(:name, :doc_id, :page, :size, :mtime)
+Document = Data.define(:id, :title, :timestamp, :location, :last_moved, :taken)
+
+DocumentAggregate = Data.define(:document, :attachments, :data)
+
+AttachmentQueryMatch = Data.define(:document_id, :document_title, :page, :name)
+
+module Logic
+
+	def reattach_attachment(from_document, attachment, to_document)
+
+	end
+
+	def rename_attachment(attachments, from, to)
+		
+	end
+
+	def create_new_attachment(document, attachments, name, page, data)
+
+	end
+
+	def create_new_document(title)
+
+	end
+
+	def update_document(attachment, title)
+
+	end
+
+	def move_document(document, location)
+
+	end
+
+	def update_attachment(attachment, page)
+
+	end
+
+	def update_attachment_data(attachment, size)
+
 	end
 end
 
@@ -356,45 +393,6 @@ class DeleteAttachment < Command
 	end
 
 	def call()
-
-	end
-end
-
-module Logic
-
-	def get_attachment_name(doc_id, name)
-
-	end
-
-	def reattach_attachment(from_document, attachment, to_document)
-
-	end
-
-	def rename_attachment(attachments, from, to)
-		
-	end
-
-	def create_new_attachment(document, attachments, name, page, data)
-
-	end
-
-	def create_new_document(title)
-
-	end
-
-	def update_document(attachment, title)
-
-	end
-
-	def move_document(document, location)
-
-	end
-
-	def update_attachment(attachment, page)
-
-	end
-
-	def update_attachment_data(attachment, size)
 
 	end
 end
