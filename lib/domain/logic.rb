@@ -1,33 +1,70 @@
 require_relative "models.rb"
 
-def reattach_attachment(from_document, attachment, to_document)
-
+def reattach_attachment(attachment, to_document, attachments)
+	throw "document already has an attachment with the same name!" if attachments.any? { |a| a.name == attachment.name }
+	return Attachment.new(
+		attachment.name, 
+		to_document.id, 
+		attachment.page,
+		attachment.size,
+		attachment.mtime
+	)
 end
 
 def rename_attachment(attachments, from, to)
-		
+	throw "document already has an attachment with the name #{to}!" if attachments.any? { |a| a.name == to }
+	attachment = attachments.find { |a| a.name == from }
+	throw "document does not have an attachment with name #{from.name}!" if not attachment
+	return Attachment.new(
+		to,
+		attachment.doc_id,
+		attachment.page,
+		attachment.size,
+		attachment.mtime
+	)
 end
 
-def create_new_attachment(document, attachments, name, page, data)
-
+def create_new_attachment(document, attachments, name, page, size)
+	throw "document already has an attachment with the name #{name}!" if attachments.any? { |a| a.name == name }
+	throw "size must not be negative!" if size < 0
+	return Attachment.new(
+		name,
+		document.id,
+		page,
+		size,
+		Time.now.to_i
+	)
 end
 
 def create_new_document(title)
-
-end
-
-def update_document(attachment, title)
-
+	return Document.new(
+		0,
+		title,
+		Time.now.to_i,
+		"new",
+		Time.now.to_i,
+		0
+	)
 end
 
 def move_document(document, location)
-
-end
-
-def update_attachment(attachment, page)
-
+	return Document.new(
+		document.id,
+		document.title,
+		document.timestamp,
+		location,
+		document.last_moved,
+		document.taken
+	)
 end
 
 def update_attachment_data(attachment, size)
-
+	throw "size must not be negative!" if size < 0
+	return Attachment.new(
+		attachment.name,
+		attachment.doc_id,
+		attachment.page,
+		size,
+		Time.now.to_i
+	)
 end

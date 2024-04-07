@@ -1,3 +1,4 @@
+
 class Archive
 
 	def initialize(path)
@@ -33,6 +34,7 @@ class Archive
 end
 
 module Injector
+	
 	def self.included(base)
 		base.class_eval do
 			@@requirements = []
