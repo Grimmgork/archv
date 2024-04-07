@@ -1,3 +1,6 @@
+require_relative "../domain/models.rb"
+require_relative "../domain/logic.rb"
+
 class Command
 	include Injector
 end

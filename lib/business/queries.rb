@@ -1,3 +1,7 @@
+require_relative "../domain/models.rb"
+
+AttachmentQueryMatch = Data.define(:document_id, :document_title, :page, :name)
+
 class Query
 	include Injector
 end
