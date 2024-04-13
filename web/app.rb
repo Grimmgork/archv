@@ -1,7 +1,10 @@
 require 'roda'
 require 'json'
 require 'htmplt'
-require '../lib/business.rb'
+require '../lib/archive.rb'
+require '../lib/domain/models.rb'
+require '../lib/business/commands.rb'
+require '../lib/business/queries.rb'
 
 Contact = Data.define(:name, :email)
 

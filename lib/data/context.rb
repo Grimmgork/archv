@@ -49,7 +49,7 @@ class Context
 				name, doc_id = row[0].split("/").reject { |s| s.nil? || s.empty? }
 				Attachment.new(name, doc_id, row[1], row[2], row[3])
 			end
-			return Repository.new(self, "sqlar", [ "name", "page", "size", "mtime" ], from_row, to_row)
+			return Repository.new(self, "sqlar", [ "name", "page", "sz", "mtime" ], false, from_row, to_row)
 		end
 
 		if type == Document
@@ -59,7 +59,7 @@ class Context
 			from_row = Proc.new do |row|
 				Document.new(row[0], row[1], row[2], row[3], row[4], row[5])
 			end
-			return Repository.new(self, "document", [ "id", "title", "timestamp", "location", "last_moved", "taken" ], from_row, to_row)
+			return Repository.new(self, "document", [ "id", "title", "timestamp", "location", "last_moved", "taken" ], true, from_row, to_row)
 		end
 
 		throw "No repository defined for type #{type}!"
@@ -67,13 +67,14 @@ class Context
 end
 
 class Repository
-	def initialize(context, table, fields, from_row, to_row)
+	def initialize(context, table, fields, primary_from_db, from_row, to_row)
 		@context = context
 		@table = table
 		@fields = fields
 		@from_row = from_row
 		@to_row = to_row
 		@primary = fields[0]
+		@primary_from_db = primary_from_db
 	end
 
 	def read(entity)
@@ -91,7 +92,9 @@ class Repository
 	end
 
 	def insert(entity)
-		@context.execute("INSERT INTO #{@table} (#{@fields.join(",")}) VALUES(#{Array.new(@fields.length, "?").join(",")});", *to_row(entity))
+		fields = @primary_from_db ? @fields.drop(1) : @fields
+		values = @primary_from_db ? to_row(entity).drop(1) : to_row(entity)
+		@context.execute("INSERT INTO #{@table} (#{fields.join(",")}) VALUES(#{Array.new(fields.length, "?").join(",")});", *values)
 		return @context.last_insert_row_id
 	end
 

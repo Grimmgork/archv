@@ -80,7 +80,7 @@ class CreateNewAttachment < Command
 		doc_repo = @context.get_repo(Document)
 		att_repo = @context.get_repo(Attachment)
 
-		document = doc_repo.read(Document.new(@doc_id))
+		document = doc_repo.read(Document.new(@doc_id, nil, nil, nil, nil, nil))
 		throw "document with id #{@doc_id} does not exists!" if not document
 
 		attachments = @archive.call(AttachmentsForDocument, @doc_id)
