@@ -4,13 +4,9 @@ CREATE TABLE IF NOT EXISTS sqlar (
 	mtime INT,				-- last modification time
 	sz INT DEFAULT 0,		-- file size
 	data BLOB,				-- content
-	page INTEGER DEFAULT 0
+	page INTEGER DEFAULT 0,
+	doc_id INTEGER DEFAULT 0
 );
-
--- name.pdf
--- size
--- page
--- doc_id
 
 CREATE TABLE IF NOT EXISTS document (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,

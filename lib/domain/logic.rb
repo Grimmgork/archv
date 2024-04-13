@@ -24,24 +24,23 @@ def rename_attachment(attachments, from, to)
 	)
 end
 
-def create_new_attachment(document, attachments, name, page, size)
+def create_new_attachment(document, attachments, name, page)
 	throw "document already has an attachment with the name #{name}!" if attachments.any? { |a| a.name == name }
-	throw "size must not be negative!" if size < 0
 	return Attachment.new(
 		name,
 		document.id,
 		page,
-		size,
+		0,
 		Time.now.to_i
 	)
 end
 
-def create_new_document(title)
+def create_new_document(title, location)
 	return Document.new(
 		0,
 		title,
 		Time.now.to_i,
-		"new",
+		location,
 		Time.now.to_i,
 		0
 	)

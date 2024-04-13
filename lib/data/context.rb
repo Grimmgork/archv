@@ -1,3 +1,4 @@
+require "sqlite3"
 require_relative "../domain/models.rb"
 
 class Context
@@ -6,9 +7,11 @@ class Context
 	end
 
 	def execute(query, *args, &block)
+		result = []
 		@db.execute(query, args) do |row|
-			block.call(row)
+			result << block.call(row)
 		end
+		result
 	end
 
 	def first(query, *args, &block)
@@ -64,7 +67,7 @@ class Context
 end
 
 class Repository
-	def initialize(context, table, primary, fields, from_row, to_row)
+	def initialize(context, table, fields, from_row, to_row)
 		@context = context
 		@table = table
 		@fields = fields

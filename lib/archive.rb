@@ -1,3 +1,4 @@
+require_relative "./data/context.rb"
 
 class Archive
 
@@ -8,7 +9,7 @@ class Archive
 	def call(type, *args, &block)
 		command = type.allocate()
 		inject_requirements(command)
-		command.initialize(@context, *args, &block)
+		command.send(:initialize, *args, &block)
 		command.call()
 	end
 

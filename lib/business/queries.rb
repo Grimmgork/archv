@@ -6,6 +6,21 @@ class Query
 	include Injector
 end
 
+class AttachmentsForDocument < Query
+	inject(:context)
+
+	def initialize(doc_id)
+		@doc_id = doc_id
+	end
+
+	def call()
+		attachments = @context.execute("SELECT name, page, sz, mtime, doc_id FROM sqlar WHERE doc_id=?", @doc_id) do |row|
+			Attachment.new(*row)
+		end
+		return attachments
+	end
+end
+
 class ReadAttachmentData < Query
 	inject(:context)
 
