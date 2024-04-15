@@ -15,7 +15,7 @@ class Context
 	end
 
 	def first(query, *args, &block)
-		@db.get_first_value(query, args)
+		@db.get_first_row(query, args)
 	end
 
 	def transaction()
@@ -79,6 +79,7 @@ class Repository
 
 	def read(entity)
 		res = @context.first("SELECT #{@fields.join(",")} FROM #{@table} WHERE #{@primary}=?;", primary_value(entity))
+		return nil if not res
 		return from_row(res)
 	end
 

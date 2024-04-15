@@ -2,11 +2,6 @@ require 'roda'
 require 'json'
 require 'htmplt'
 require '../lib/archive.rb'
-require '../lib/domain/models.rb'
-require '../lib/business/commands.rb'
-require '../lib/business/queries.rb'
-
-Contact = Data.define(:name, :email)
 
 # CONFIG
 class App < Roda
@@ -21,26 +16,17 @@ class App < Roda
 		archive = r.env["CONTEXT"]
 
 		r.on 'static' do
-			r.public
+			r.public # serve static files
 		end
 
 		r.get "api", "document", Integer do |id|
-			document = archive.get_document_by_id(id)
+			document = archive.call(GetDocumentById, id)
 			r.halt(404) if not document
-			document
-		end
-
-		r.get "api", "document", "query" do
-			query = parse_simple_query(r.params)
-			archive.get_documents_where(query)
+			document.to_h
 		end
 
 		r.post "api", "document", Integer do |id|
-			document = archive.get_document_by_id(id)
-			r.halt(404) if not document
-			update_from_hash(document, r.params, [:title])
-			archive.update_document(document)
-			r.halt(200)
+			throw "not implemented!" # TODO
 		end
 
 		r.post "api", "document", Integer, "move" do |id|
@@ -48,13 +34,13 @@ class App < Roda
 			if not location
 				r.halt(400)
 			end
-			archive.move_document(id, location)
+			archive.call(MoveDocument, id, location)
 			r.halt(200)
 		end
 
 		r.post "api", "document", "create" do
-			title = r.params["location"]
-			archive.create_document(title)
+			title = r.params["title"]
+			archive.call(CreateNewDocument, title)
 		end
 
 		r.post "api", "document", Integer, "attach" do |id|
@@ -64,24 +50,21 @@ class App < Roda
 			end
 
 			file = r.params["file"]
+			data = file[:tempfile].read
 			name = file[:filename].force_encoding(Encoding::UTF_8)
-
-			att_id = archive.create_attachment(name, page: page, doc_id: id, data: file[:tempfile].read)
-			att_id.to_s
+			
+			archive.call(CreateNewAttachment, id, name, page)
+			# TODO write attachment data
 		end
 
-		r.get "api", "attachment", "query" do
-			query = parse_simple_query(r.params)
-			archive.get_attachments_where(query)
-		end
-
-		r.get "api", "attachment", Integer do |id|
-			attachment = archive.get_attachment_by_id(id)
+		r.get "api", "document", Integer, "attachment", String do |doc_id, att_name|
+			r.halt(400) if not att_name
+			attachment = archive.call(GetAttachmentByName, doc_id, att_name)
 			r.halt(404) if not attachment
-			attachment
+			attachment.to_h
 		end
 
-		r.get "api", "attachment", Integer, "data" do |id|
+		r.get "api", "document", Integer, "attachment", String, "data" do |doc_id, att_name|
 			attachment = archive.get_attachment_by_id(id)
 			r.halt(404) if not attachment
 			data = archive.read_attachment_data(id)
@@ -133,22 +116,6 @@ class App < Roda
 				end
 			end
 		end
-	end
-
-	def parse_simple_query(params)
-		if params["where"].class == String
-			params["where"] = JSON.parse(params["where"])
-		end
-		if params["sort"].class == String
-			params["sort"] = JSON.parse(params["sort"])
-		end
-		if params["skip"].class == String
-			params["skip"] = JSON.parse(params["skip"])
-		end
-		if params["take"].class == String
-			params["take"] = JSON.parse(params["take"])
-		end
-		params
 	end
 
 	def update_from_hash(entity, hash, properties)

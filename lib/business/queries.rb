@@ -1,4 +1,5 @@
 require_relative "../domain/models.rb"
+require_relative "injector.rb"
 
 AttachmentQueryMatch = Data.define(:document_id, :document_title, :page, :name)
 
@@ -33,15 +34,17 @@ class ReadAttachmentData < Query
 	end
 end
 
-class GetAttachmentById < Query
+class GetAttachmentByName < Query
 	inject(:context)
 
 	def initialize(doc_id, name)
-
+		@doc_id = doc_id
+		@name = name
 	end
 
 	def call()
-
+		repo = @context.get_repo(Attachment)
+		return repo.read(Attachment.new(@doc_id, @name, nil, nil, nil))
 	end
 end
 
@@ -54,6 +57,19 @@ class KeywordSearch < Query
 
 	def call()
 
+	end
+end
+
+class GetDocumentById < Query
+	inject(:context)
+
+	def initialize(id)
+		@id = id
+	end
+
+	def call()
+		repo = @context.get_repo(Document)
+		return repo.read(Document.new(@id, nil, nil, nil, nil, nil))
 	end
 end
 

@@ -1,6 +1,7 @@
 require_relative "../domain/models.rb"
 require_relative "../domain/logic.rb"
 require_relative "queries.rb"
+require_relative "injector.rb"
 
 class Command
 	include Injector
@@ -55,13 +56,14 @@ end
 class CreateNewDocument < Command
 	inject(:context)
 
-	def initialize(title)
+	def initialize(title, location=nil)
 		@title = title
+		@location = location
 	end
 
 	def call()
 		repo = @context.get_repo(Document)
-		attachment = create_new_document(@title, "new")
+		attachment = create_new_document(@title, @location || "new")
 		repo.insert(attachment)
 	end
 end
@@ -85,7 +87,7 @@ class CreateNewAttachment < Command
 
 		attachments = @archive.call(AttachmentsForDocument, @doc_id)
 		attachment = create_new_attachment(document, attachments, @name, @page)
-		att_repo.insert(attachment)
+		return att_repo.insert(attachment)
 	end
 end
 

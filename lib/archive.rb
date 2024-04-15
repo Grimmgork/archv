@@ -1,5 +1,8 @@
 require_relative "./data/context.rb"
 
+require_relative "./business/commands.rb"
+require_relative "./business/queries.rb"
+
 class Archive
 
 	def initialize(path)
@@ -34,19 +37,3 @@ class Archive
 	end
 end
 
-module Injector
-	
-	def self.included(base)
-		base.class_eval do
-			@@requirements = []
-
-			def self.inject(name)
-				@@requirements.append(name)
-			end
-
-			def self.requirements
-				@@requirements
-			end
-		end
-	end
-end
