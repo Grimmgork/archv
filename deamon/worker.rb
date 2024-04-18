@@ -8,16 +8,13 @@ class Worker
 		return if not @work
 		return if not @location
 
-		documents = archive.get_documents_where({
-			"where" => ["and", ["eq", ["prop", "location"], @location], ["eq", ["prop", "taken"], 0]],
-			"sort"  => { "last_moved" => true },
-			"take"  => 1
-		})
+		documents = archive.call(GetUntakenDocumentsByLocation, @location)
+		documents = documents.sort_by { |doc| doc.last_moved } # least recently moved document first
 		
 		return if documents.length <= 0
 		document = documents[0]
 
-		if not archive.try_take_document(document.id)
+		if not archive.call(TryTakeDocument, document.id)
 			return
 		end
 

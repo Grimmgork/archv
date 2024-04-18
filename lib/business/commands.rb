@@ -133,7 +133,7 @@ class ReadAttachmentDataToFile < Command
 	end
 
 	def call()
-
+		# TODO
 	end
 end
 
@@ -145,7 +145,42 @@ class CrateAttachmentFromFile < Command
 	end
 
 	def call()
+		# TODO 
+	end
+end
 
+class TryTakeDocument < Command
+	inject(:context)
+	transaction(:immediate)
+
+	def initialize(doc_id)
+		@doc_id = doc_id
+	end
+
+	def call()
+		repo = @context.get_repo(Document)
+		document = repo.read(Document.new(@doc_id, nil, nil, nil, nil, nil))
+		throw "document with id #{@doc_id} does not exist!" if not document
+		document = try_take_document(document)
+		return false if not document
+		repo.update(document)
+		return true
+	end
+end
+
+class FreeDocument < Command
+	inject(:context)
+
+	def initialize(doc_id)
+		@doc_id = doc_id
+	end
+
+	def call()
+		repo = @context.get_repo(Document)
+		document = repo.read(Document.new(@doc_id, nil, nil, nil, nil, nil))
+		throw "document with id #{@doc_id} does not exist!" if not document
+		document = free_document(document)
+		repo.update(document)
 	end
 end
 

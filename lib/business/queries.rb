@@ -7,15 +7,16 @@ class Query
 	include Injector
 end
 
-class AttachmentsForDocument < Query
+class GetAttachmentsForDocument < Query
 	inject(:context)
 
-	def initialize(doc_id)
+	def initialize(doc_id, filename=nil)
 		@doc_id = doc_id
+		@filename = filename
 	end
 
 	def call()
-		attachments = @context.execute("SELECT name, page, sz, mtime, doc_id FROM sqlar WHERE doc_id=?", @doc_id) do |row|
+		attachments = @context.execute("SELECT name, page, sz, mtime, doc_id FROM sqlar WHERE name LIKE '/' || ? || '/' || ?;", @doc_id, @filename || "%") do |row|
 			Attachment.new(*row)
 		end
 		return attachments
@@ -81,24 +82,12 @@ class GetUntakenDocumentsByLocation < Query
 	inject(:context)
 
 	def initialize(location)
-		@localion = localion
+		@location = location
 	end
 
 	def call()
-		attachments = @context.execute("SELECT id, title, timestamp, location, last_moved, taken FROM documents WHERE location=? AND taken=0", @location) do |row|
+		@context.execute("SELECT id, title, timestamp, location, last_moved, taken FROM document WHERE location=? AND taken=0", @location) do |row|
 			Document.new(*row)
 		end
-	end
-end
-
-class GetAttachmentsForDocument < Query
-	inject(:context)
-
-	def initialize(keyword)
-
-	end
-
-	def call()
-
 	end
 end

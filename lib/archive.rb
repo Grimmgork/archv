@@ -13,13 +13,17 @@ class Archive
 		command = type.allocate()
 		inject_requirements(command)
 		command.send(:initialize, *args, &block)
-		@context.transaction do
+		if type.transaction_mode == nil || type.transaction_mode == :none
 			command.call()
+		else
+			@context.transaction(type.transaction_mode) do
+				command.call()
+			end
 		end
 	end
 
-	def transaction()
-		@context.transaction do
+	def transaction(mode=nil)
+		@context.transaction(mode) do
 			yield
 		end
 	end

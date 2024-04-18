@@ -46,6 +46,17 @@ def create_new_document(title, location)
 	)
 end
 
+def try_take_document(document)
+	if document.taken != 0
+		return nil
+	end
+	return document.clone(taken: 1)
+end
+
+def free_document(document)
+	return document.clone(taken: 0)
+end
+
 def move_document(document, location)
 	return document.clone(localion: location)
 end

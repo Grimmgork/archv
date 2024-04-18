@@ -6,6 +6,7 @@ class Context
 		@db = SQLite3::Database.open path
 		@db.execute("PRAGMA journal_mode = DELETE;")
 		@savepoint_counter = 0
+		@transaction_mode = nil
 	end
 
 	def execute(query, *args, &block)
@@ -20,16 +21,20 @@ class Context
 		block_given? ? yield(@db.get_first_row(query, args)) : @db.get_first_row(query, args)
 	end
 
-	def transaction()
+	def transaction(mode=nil)
 		# if a transaction is running, use a savepoint
 		if @db.transaction_active?
+			throw "cannot switch transactions mode inside an transaction!" if mode and (mode != @transaction_mode)
 			return savepoint() do
 				yield
 			end
 		end
 
+		mode = :deferred if not mode
+		@transaction_mode = mode
+
 		@savepoint_counter = 0
-		@db.execute("BEGIN TRANSACTION;")
+		@db.execute("BEGIN TRANSACTION #{mode.to_s.upcase};")
 		result = nil
 		begin
 			result = yield()
@@ -116,7 +121,7 @@ class Repository
 	end
 
 	def update(entity)
-		statements = @fields.select { |field| "#{field}=?" }
+		statements = @fields.map { |field| "#{field}=?" }
 		@context.execute("UPDATE #{@table} SET #{statements.join(",")} WHERE #{@primary}=?;", *to_row(entity).append(primary_value(entity)))
 	end
 
