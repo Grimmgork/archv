@@ -45,11 +45,14 @@ class SetDocumentTitle < Command
 	inject(:context)
 
 	def initialize(doc_id, title)
-
+		@doc_id = doc_id
+		@title = title
 	end
 
 	def call()
-
+		repo = @context.get_repo(Document)
+		document = repo.read(Document.new(@doc_id, nil, nil, nil, nil, nil))
+		document = Document.new()
 	end
 end
 
@@ -72,10 +75,11 @@ class CreateNewAttachment < Command
 	inject(:context)
 	inject(:archive)
 
-	def initialize(doc_id, name, page)
+	def initialize(doc_id, name, page, data=nil)
 		@doc_id = doc_id
 		@name = name
 		@page = page
+		@data = data
 	end
 
 	def call()
@@ -87,7 +91,7 @@ class CreateNewAttachment < Command
 
 		attachments = @archive.call(AttachmentsForDocument, @doc_id)
 		attachment = create_new_attachment(document, attachments, @name, @page)
-		return att_repo.insert(attachment)
+		att_repo.insert(attachment)
 	end
 end
 
@@ -111,7 +115,7 @@ class ReattachAttachment < Command
 		throw "document with id #{@doc_id} does not exist!" if not from_document
 		throw "document with id #{@new_doc_id} does not exist!" if not to_document
 
-		attachment = att_repo.read(Attachment.new(@doc_id, @att_name))
+		attachment = att_repo.read(Attachment.new(@doc_id, @att_name, nil, nil, nil))
 		throw "attachment with name #{@att_name} does not exist for document with id #{@doc_id}" if not attachment
 		
 		attachments = @archive.call(AttachmentsForDocument, @doc_id)
@@ -121,8 +125,8 @@ class ReattachAttachment < Command
 	end
 end
 
-class WriteAttachmentDataToFile < Command
-	inject(:content)
+class ReadAttachmentDataToFile < Command
+	inject(:context)
 
 	def initialize(doc_id, name, filename)
 
@@ -134,7 +138,7 @@ class WriteAttachmentDataToFile < Command
 end
 
 class CrateAttachmentFromFile < Command
-	inject(:content)
+	inject(:context)
 
 	def initialize(doc_id, name, filename)
 
@@ -146,25 +150,33 @@ class CrateAttachmentFromFile < Command
 end
 
 class WriteAttachmentData < Command
-	inject(:content)
+	inject(:context)
 
 	def initialize(doc_id, name, data)
-
+		@doc_id = doc_id
+		@name = name
+		@data = data
 	end
 
 	def call()
-
+		repo = @context.get_repo(Attachment)
+		attachment = repo.read(Attachment.new(@name, @doc_id, nil, nil, nil))
+		throw "attachment with name #{@name} does not exist for document with id #{@doc_id}!" if not attachment
+		name = "/#{@doc_id}/#{@name}"
+		@context.execute("UPDATE sqlar SET data=?, sz=? WHERE name=?;", @data, @data.length, name)
 	end
 end
 
 class DeleteAttachment < Command
-	inject(:content)
+	inject(:context)
 
 	def initialize(doc_id, name)
-
+		@doc_id = doc_id
+		@name = name
 	end
 
 	def call()
-
+		repo = @context.get_repo(Attachment)
+		repo.delete(Attachment.new(@doc_id, @name, nil, nil, nil))
 	end
 end

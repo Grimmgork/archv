@@ -47,14 +47,7 @@ def create_new_document(title, location)
 end
 
 def move_document(document, location)
-	return Document.new(
-		document.id,
-		document.title,
-		document.timestamp,
-		location,
-		document.last_moved,
-		document.taken
-	)
+	return document.clone(localion: location)
 end
 
 def update_attachment_data(attachment, size)

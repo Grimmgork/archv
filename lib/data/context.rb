@@ -4,6 +4,8 @@ require_relative "../domain/models.rb"
 class Context
 	def initialize(path)
 		@db = SQLite3::Database.open path
+		@db.execute("PRAGMA journal_mode = DELETE;")
+		@savepoint_counter = 0
 	end
 
 	def execute(query, *args, &block)
@@ -15,10 +17,18 @@ class Context
 	end
 
 	def first(query, *args, &block)
-		@db.get_first_row(query, args)
+		block_given? ? yield(@db.get_first_row(query, args)) : @db.get_first_row(query, args)
 	end
 
 	def transaction()
+		# if a transaction is running, use a savepoint
+		if @db.transaction_active?
+			return savepoint() do
+				yield
+			end
+		end
+
+		@savepoint_counter = 0
 		@db.execute("BEGIN TRANSACTION;")
 		result = nil
 		begin
@@ -27,7 +37,6 @@ class Context
 			@db.execute("ROLLBACK;")
 			raise
 		end
-
 		@db.execute("COMMIT;")
 		return result
 	end
@@ -46,7 +55,7 @@ class Context
 				[ "/#{obj.doc_id}/#{obj.name}", obj.page, obj.size, obj.mtime ]
 			end
 			from_row = Proc.new do |row|
-				name, doc_id = row[0].split("/").reject { |s| s.nil? || s.empty? }
+				doc_id, name = row[0].split("/").reject { |s| s.nil? || s.empty? }
 				Attachment.new(name, doc_id, row[1], row[2], row[3])
 			end
 			return Repository.new(self, "sqlar", [ "name", "page", "sz", "mtime" ], false, from_row, to_row)
@@ -63,6 +72,25 @@ class Context
 		end
 
 		throw "No repository defined for type #{type}!"
+	end
+
+	private
+	
+	def savepoint()
+		name = "sf_#{@savepoint_counter}"
+		@savepoint_counter = @savepoint_counter + 1
+
+		@db.execute("SAVEPOINT #{name};")
+		result = nil
+		begin
+			result = yield()
+		rescue
+			@db.execute("ROLLBACK TRANSACTION TO SAVEPOINT #{name};")
+			raise
+		end
+
+		@db.execute("RELEASE SAVEPOINT #{name};")
+		return result
 	end
 end
 
@@ -95,6 +123,7 @@ class Repository
 	def insert(entity)
 		fields = @primary_from_db ? @fields.drop(1) : @fields
 		values = @primary_from_db ? to_row(entity).drop(1) : to_row(entity)
+
 		@context.execute("INSERT INTO #{@table} (#{fields.join(",")}) VALUES(#{Array.new(fields.length, "?").join(",")});", *values)
 		return @context.last_insert_row_id
 	end

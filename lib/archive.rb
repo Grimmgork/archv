@@ -13,7 +13,15 @@ class Archive
 		command = type.allocate()
 		inject_requirements(command)
 		command.send(:initialize, *args, &block)
-		command.call()
+		@context.transaction do
+			command.call()
+		end
+	end
+
+	def transaction()
+		@context.transaction do
+			yield
+		end
 	end
 
 	def close()

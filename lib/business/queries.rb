@@ -26,11 +26,15 @@ class ReadAttachmentData < Query
 	inject(:context)
 
 	def initialize(doc_id, name)
-
+		@doc_id = doc_id
+		@name = name
 	end
 
 	def call()
-
+		name = "/#{@doc_id}/#{@name}"
+		@context.first("SELECT data FROM sqlar WHERE name=?;", name) do |row|
+			row[0]
+		end
 	end
 end
 
@@ -44,7 +48,7 @@ class GetAttachmentByName < Query
 
 	def call()
 		repo = @context.get_repo(Attachment)
-		return repo.read(Attachment.new(@doc_id, @name, nil, nil, nil))
+		return repo.read(Attachment.new(@name, @doc_id, nil, nil, nil))
 	end
 end
 
@@ -73,15 +77,17 @@ class GetDocumentById < Query
 	end
 end
 
-class GetDocumentsByLocation < Query
+class GetUntakenDocumentsByLocation < Query
 	inject(:context)
 
 	def initialize(location)
-
+		@localion = localion
 	end
 
 	def call()
-
+		attachments = @context.execute("SELECT id, title, timestamp, location, last_moved, taken FROM documents WHERE location=? AND taken=0", @location) do |row|
+			Document.new(*row)
+		end
 	end
 end
 
@@ -89,18 +95,6 @@ class GetAttachmentsForDocument < Query
 	inject(:context)
 
 	def initialize(keyword)
-
-	end
-
-	def call()
-
-	end
-end
-
-class ReadAttachmentData < Query
-	inject(:context)
-
-	def initialize(doc_id, name)
 
 	end
 

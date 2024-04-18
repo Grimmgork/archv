@@ -25,10 +25,6 @@ class App < Roda
 			document.to_h
 		end
 
-		r.post "api", "document", Integer do |id|
-			throw "not implemented!" # TODO
-		end
-
 		r.post "api", "document", Integer, "move" do |id|
 			location = r.params["location"]
 			if not location
@@ -43,7 +39,7 @@ class App < Roda
 			archive.call(CreateNewDocument, title)
 		end
 
-		r.post "api", "document", Integer, "attach" do |id|
+		r.post "api", "document", Integer, "attach" do |doc_id|
 			page = r.params["page"].to_i
 			if page == nil or page < 0
 				page = 0
@@ -51,10 +47,12 @@ class App < Roda
 
 			file = r.params["file"]
 			data = file[:tempfile].read
-			name = file[:filename].force_encoding(Encoding::UTF_8)
+			filename = file[:filename].force_encoding(Encoding::UTF_8)
 			
-			archive.call(CreateNewAttachment, id, name, page)
-			# TODO write attachment data
+			archive.transaction do
+				archive.call(CreateNewAttachment, doc_id, filename, page)
+				archive.call(WriteAttachmentData, doc_id, filename, data)
+			end
 		end
 
 		r.get "api", "document", Integer, "attachment", String do |doc_id, att_name|
@@ -65,22 +63,14 @@ class App < Roda
 		end
 
 		r.get "api", "document", Integer, "attachment", String, "data" do |doc_id, att_name|
-			attachment = archive.get_attachment_by_id(id)
+			attachment = archive.call(GetAttachmentByName, doc_id, att_name)
 			r.halt(404) if not attachment
-			data = archive.read_attachment_data(id)
-			headers = { 
+			data = archive.call(ReadAttachmentData, doc_id, att_name)
+			headers = {
 				"Content-Type" => "application/octet-stream",
 				"Content-Disposition" => "attachment; filename=\"#{attachment.name}\""
 			}
 			r.halt(200, headers, data)
-		end
-
-		r.post "api", "attachment", Integer do |id|
-			attachment = archive.get_attachment_by_id(id)
-			r.halt(404) if not attachment
-			update_from_hash(attachment, r.params, [:name, :page])
-			archive.update_attachment(attachment)
-			r.halt(200)
 		end
 
 		r.get "ui" do
