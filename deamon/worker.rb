@@ -1,7 +1,8 @@
 class Worker
-	def initialize(location, work)
-		@work = work
+	def initialize(location, filenames, &block)
+		@work = block
 		@location = location
+		@filenames = filenames
 	end
 
 	def run(archive)
@@ -18,14 +19,16 @@ class Worker
 			return
 		end
 
+		attachments = archive.call(GetAttachmentsForDocument, document.id, *@filenames)
+
 		begin
-			next_location = @work.call(archive, document)
-			archive.move_document(document.id, next_location || @location)
+			next_location = @work.call(archive, document, attachments)
+			archive.call(MoveDocument, document.id, next_location || @location)
 		rescue => error
 			puts "#{@location} ERROR: #{error}"
 			archive.move_document(document.id, "error")
 		end
 		
-		archive.free_document(document.id)
+		archive.call(FreeDocument, document.id)
 	end
 end

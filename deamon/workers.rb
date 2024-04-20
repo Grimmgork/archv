@@ -1,19 +1,8 @@
 require 'tempfile'
-require './deamon/tesseract.rb'
+require './worker.rb'
+require './tesseract.rb'
 
-"ocr" do |arch, doc|
-	attachments = arch.get_attachments_where({ 
-		"where" => ["and", 
-			["eq", ["prop", "doc_id"], doc.id],
-			["or", 
-				["like", ["prop", "name"], "%.jpg"], 
-				["like", ["prop", "name"], "%.jpeg"], 
-				["like", ["prop", "name"], "%.png"]
-			]
-		],
-		"sort" => { "page" => true }
-	})
-
+define("ocr", ["%.jpg", "%.png"]) do |archive, document, attachments|
 	if attachments.length == 0
 		raise "no suitable attachments for ocr on document #{doc.id}!"
 	end
@@ -21,7 +10,7 @@ require './deamon/tesseract.rb'
 	# write attachments data to tempfiles
   	paths = attachments.map do |attch|
 		path = Dir::Tmpname.create(['attch', ".#{attch.name}"]) {}
-		arch.write_attachment_to_file(attch.id, fullpath: path)
+		archive.call(WriteAttachmentToFile, attch.id, path)
 		path
 	end
 
@@ -29,9 +18,9 @@ require './deamon/tesseract.rb'
 	tess = Tesseract.new(paths)
 	out = tess.run(lang: 'deu')
         
-    # load result files as attachments
-	arch.create_attachment_from_file("#{out}.pdf", doc_id: doc.id, name: "ocr.pdf")
-	arch.create_attachment_from_file("#{out}.txt", doc_id: doc.id, name: "ocr.txt")
+    # create attachments from result files
+	archive.call(CreateAttachmentFromFile, "#{out}.pdf", document.id, "ocr.pdf")
+	archive.call(CreateAttachmentFromFile, "#{out}.txt", document.id, "ocr.txt")
 
 	# clean up
 	tess.close()

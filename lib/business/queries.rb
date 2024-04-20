@@ -10,13 +10,26 @@ end
 class GetAttachmentsForDocument < Query
 	inject(:context)
 
-	def initialize(doc_id, filename=nil)
+	def initialize(doc_id, *filenames)
 		@doc_id = doc_id
-		@filename = filename
+		@filenames = filenames
 	end
 
 	def call()
-		attachments = @context.execute("SELECT name, page, sz, mtime, doc_id FROM sqlar WHERE name LIKE '/' || ? || '/' || ?;", @doc_id, @filename || "%") do |row|
+		statements = []
+		args = []
+		@filenames.each do |like| 
+			statements << "name LIKE '/' || ? || '/' || ?"
+			args << @doc_id
+			args << like
+		end
+
+		if @filenames.length == 0
+			statements << "name LIKE '/' || ? || '/%'"
+			args << @doc_id
+		end
+		
+		attachments = @context.execute("SELECT name, page, sz, mtime, doc_id FROM sqlar WHERE #{statements.join(" OR ")};", *args) do |row|
 			Attachment.new(*row)
 		end
 		return attachments
