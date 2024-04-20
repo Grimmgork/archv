@@ -7,7 +7,7 @@ class Workers
 		@workers = []
 	end
 
-	def define(location, filenames, &block)
+	def worker(location, filenames, &block)
 		@workers << Worker.new(location, filenames, &block)
 	end
 
@@ -15,7 +15,7 @@ class Workers
 		@workers
 	end
 
-	def self.define(code)
+	def self.configure(code)
 		instance = Workers.new()
 		instance.get_binding.eval(code)
 		instance.workers
@@ -31,7 +31,7 @@ DATABASE = 'data.db'
 WORK_DELAY = 1
 
 code = File.read((File.dirname(__FILE__) + '/workers.rb'))
-workers = Workers.define(code)
+workers = Workers.configure(code)
 
 # run each worker in new thread
 threads = []

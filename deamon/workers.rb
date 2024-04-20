@@ -1,8 +1,8 @@
 require 'tempfile'
-require './worker.rb'
 require './tesseract.rb'
+require '../lib/archive.rb'
 
-define("ocr", ["%.jpg", "%.png"]) do |archive, document, attachments|
+worker "ocr", ["%.jpg", "%.png"] do |archive, document, attachments|
 	if attachments.length == 0
 		raise "no suitable attachments for ocr on document #{doc.id}!"
 	end
