@@ -27,9 +27,10 @@ class Workers
 end
 
 # CONFIG
-DATABASE = 'data.db'
+DATABASE = '../web/data.db'
 WORK_DELAY = 1
 
+# configure workers from a file
 code = File.read((File.dirname(__FILE__) + '/workers.rb'))
 workers = Workers.configure(code)
 
@@ -37,7 +38,7 @@ workers = Workers.configure(code)
 threads = []
 cancel = false
 for worker in workers
-	th = Thread.new(worker) do |worker|
+	thread = Thread.new(worker) do |worker|
 		puts "starting worker ->"
 		archive = Archive.new(DATABASE)
 		while not cancel do
@@ -46,7 +47,7 @@ for worker in workers
 		end
 		archive.close()
 	end
-	threads.append(th)
+	threads.append(thread)
 end
 
 # Trap ^C 

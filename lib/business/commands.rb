@@ -35,7 +35,8 @@ class MoveDocument < Command
 
 	def call()
 		repo = @context.get_repo(Document)
-		document = repo.read(Document.new(@doc_id))
+		document = repo.read(Document.new(@doc_id, nil, nil, nil, nil, nil))
+		throw "document with id #{@doc_id} does not exist!" if not document
 		document = move_document(document, @location)
 		repo.update(document)
 	end
@@ -52,7 +53,7 @@ class SetDocumentTitle < Command
 	def call()
 		repo = @context.get_repo(Document)
 		document = repo.read(Document.new(@doc_id, nil, nil, nil, nil, nil))
-		document = Document.new()
+		throw "not implemented!"
 	end
 end
 
@@ -115,7 +116,7 @@ class ReattachAttachment < Command
 		throw "document with id #{@doc_id} does not exist!" if not from_document
 		throw "document with id #{@new_doc_id} does not exist!" if not to_document
 
-		attachment = att_repo.read(Attachment.new(@doc_id, @att_name, nil, nil, nil))
+		attachment = att_repo.read(Attachment.new(@att_name, @doc_id, nil, nil, nil))
 		throw "attachment with name #{@att_name} does not exist for document with id #{@doc_id}" if not attachment
 		
 		attachments = @archive.call(AttachmentsForDocument, @doc_id)
@@ -125,27 +126,46 @@ class ReattachAttachment < Command
 	end
 end
 
-class ReadAttachmentDataToFile < Command
+class WriteFileFromAttachment < Command
 	inject(:context)
+	inject(:archive)
 
-	def initialize(doc_id, name, filename)
-
+	def initialize(doc_id, name, handle)
+		@doc_id = doc_id
+		@name = name
+		@handle = handle
 	end
 
 	def call()
-		# TODO
+		repo = @context.get_repo(Attachment)
+		attachment = repo.read(Attachment.new(@name, @doc_id, nil, nil, nil))
+		throw "attachment with name #{@name} does not exist for document with id #{@doc_id}" if not attachment
+		data = @archive.call(ReadAttachmentData, @doc_id, @name)
+		@handle.write(data)
 	end
 end
 
-class CrateAttachmentFromFile < Command
+class CreateAttachmentFromFile < Command
 	inject(:context)
+	inject(:archive)
 
-	def initialize(doc_id, name, filename)
-
+	def initialize(doc_id, name, page, handle)
+		@doc_id = doc_id
+		@name = name
+		@handle = handle
+		@page = page
 	end
 
 	def call()
-		# TODO 
+		att_repo = @context.get_repo(Attachment)
+		doc_repo = @context.get_repo(Document)
+		document = doc_repo.read(Document.new(@doc_id, nil, nil, nil, nil, nil))
+		throw "document with id #{@doc_id} does not exist!" if not document
+		attachments = @archive.call(GetAttachmentsForDocument, @doc_id)
+		attachment = create_new_attachment(document, attachments, @name, @page)
+		att_repo.insert(attachment)
+		data = @handle.read()
+		@archive.call(WriteAttachmentData, @doc_id, @name, data)
 	end
 end
 
@@ -153,7 +173,7 @@ class TryTakeDocument < Command
 	inject(:context)
 	transaction(:immediate)
 
-	def initialize(doc_id)
+	def initialize(doc_id, timeout=nil)
 		@doc_id = doc_id
 	end
 

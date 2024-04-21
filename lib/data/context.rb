@@ -34,14 +34,17 @@ class Context
 		@transaction_mode = mode
 
 		@savepoint_counter = 0
+		puts "BEGIN TRANSACTION"
 		@db.execute("BEGIN TRANSACTION #{mode.to_s.upcase};")
 		result = nil
 		begin
 			result = yield()
 		rescue
+			puts "ROLLBACK"
 			@db.execute("ROLLBACK;")
 			raise
 		end
+		puts "COMMIT"
 		@db.execute("COMMIT;")
 		return result
 	end
@@ -85,15 +88,18 @@ class Context
 		name = "sf_#{@savepoint_counter}"
 		@savepoint_counter = @savepoint_counter + 1
 
+		puts "SAVEPOINT BEGIN"
 		@db.execute("SAVEPOINT #{name};")
 		result = nil
 		begin
 			result = yield()
 		rescue
+			puts "ROLLBACK SAVEPOINT"
 			@db.execute("ROLLBACK TRANSACTION TO SAVEPOINT #{name};")
 			raise
 		end
 
+		puts "RELEASE SAVEPOINT"
 		@db.execute("RELEASE SAVEPOINT #{name};")
 		return result
 	end

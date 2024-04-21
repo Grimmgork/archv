@@ -1,3 +1,5 @@
+require_relative "../lib/archive.rb"
+
 class Worker
 	def initialize(location, filenames, &block)
 		@work = block
@@ -26,7 +28,7 @@ class Worker
 			archive.call(MoveDocument, document.id, next_location || @location)
 		rescue => error
 			puts "#{@location} ERROR: #{error}"
-			archive.move_document(document.id, "error")
+			archive.call(MoveDocument, document.id, "error")
 		end
 		
 		archive.call(FreeDocument, document.id)

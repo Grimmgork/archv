@@ -58,7 +58,7 @@ def free_document(document)
 end
 
 def move_document(document, location)
-	return document.clone(localion: location)
+	return document.clone(location: location)
 end
 
 def update_attachment_data(attachment, size)
