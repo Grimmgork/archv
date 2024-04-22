@@ -24,27 +24,23 @@ class Context
 	def transaction(mode=nil)
 		# if a transaction is running, use a savepoint
 		if @db.transaction_active?
-			throw "cannot switch transactions mode inside an transaction!" if mode and (mode != @transaction_mode)
+			throw "cannot switch transaction mode from #{@transaction_mode} to #{mode} inside an transaction!" if mode and (mode != @transaction_mode)
 			return savepoint() do
 				yield
 			end
 		end
 
-		mode = :deferred if not mode
-		@transaction_mode = mode
-
+		@transaction_mode = mode || :deferred
 		@savepoint_counter = 0
-		puts "BEGIN TRANSACTION"
-		@db.execute("BEGIN TRANSACTION #{mode.to_s.upcase};")
+
+		@db.execute("BEGIN TRANSACTION #{@transaction_mode.to_s.upcase};")
 		result = nil
 		begin
 			result = yield()
 		rescue
-			puts "ROLLBACK"
 			@db.execute("ROLLBACK;")
 			raise
 		end
-		puts "COMMIT"
 		@db.execute("COMMIT;")
 		return result
 	end
@@ -88,18 +84,15 @@ class Context
 		name = "sf_#{@savepoint_counter}"
 		@savepoint_counter = @savepoint_counter + 1
 
-		puts "SAVEPOINT BEGIN"
 		@db.execute("SAVEPOINT #{name};")
 		result = nil
 		begin
 			result = yield()
 		rescue
-			puts "ROLLBACK SAVEPOINT"
 			@db.execute("ROLLBACK TRANSACTION TO SAVEPOINT #{name};")
 			raise
 		end
 
-		puts "RELEASE SAVEPOINT"
 		@db.execute("RELEASE SAVEPOINT #{name};")
 		return result
 	end
@@ -123,7 +116,7 @@ class Repository
 	end
 
 	def delete(entity)
-		@context.execute("DELETE FROM #{@table} WHERE #{@primary}=?", primary_value(entity))
+		@context.execute("DELETE FROM #{@table} WHERE #{@primary}=?;", primary_value(entity))
 	end
 
 	def update(entity)

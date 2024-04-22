@@ -3,11 +3,8 @@ require_relative "injector.rb"
 
 AttachmentQueryMatch = Data.define(:document_id, :document_title, :page, :name)
 
-class Query
+class GetAttachmentsForDocument
 	include Injector
-end
-
-class GetAttachmentsForDocument < Query
 	inject(:context)
 
 	def initialize(doc_id, *filenames)
@@ -30,13 +27,15 @@ class GetAttachmentsForDocument < Query
 		end
 		
 		attachments = @context.execute("SELECT name, page, sz, mtime, doc_id FROM sqlar WHERE #{statements.join(" OR ")};", *args) do |row|
-			Attachment.new(*row)
+			doc_id, name = row[0].split("/").reject { |s| s.nil? || s.empty? }
+			Attachment.new(name, doc_id, row[1], row[2], row[3])
 		end
 		return attachments
 	end
 end
 
-class ReadAttachmentData < Query
+class ReadAttachmentData
+	include Injector
 	inject(:context)
 
 	def initialize(doc_id, name)
@@ -52,7 +51,8 @@ class ReadAttachmentData < Query
 	end
 end
 
-class GetAttachmentByName < Query
+class GetAttachmentByName
+	include Injector
 	inject(:context)
 
 	def initialize(doc_id, name)
@@ -66,7 +66,8 @@ class GetAttachmentByName < Query
 	end
 end
 
-class KeywordSearch < Query
+class KeywordSearch
+	include Injector
 	inject(:context)
 
 	def initialize(keyword)
@@ -78,7 +79,8 @@ class KeywordSearch < Query
 	end
 end
 
-class GetDocumentById < Query
+class GetDocumentById
+	include Injector
 	inject(:context)
 
 	def initialize(id)
@@ -91,7 +93,8 @@ class GetDocumentById < Query
 	end
 end
 
-class GetUntakenDocumentsByLocation < Query
+class GetUntakenDocumentsByLocation
+	include Injector
 	inject(:context)
 
 	def initialize(location)

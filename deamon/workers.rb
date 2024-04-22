@@ -10,21 +10,31 @@ worker "ocr", ["%.jpg", "%.png"] do |archive, document, attachments|
 	# write attachments data to tempfiles
   	paths = attachments.map do |attch|
 		path = Dir::Tmpname.create(['attch', ".#{attch.name}"]) {}
-		archive.call(CreateFileFromAttachment, attch.id, path)
+		fh = File.open(path, "wb")
+		archive.call(WriteAttachmentDataToFileHandle, document.id, attch.name, fh)
+		fh.close()
 		path
 	end
 
 	# run tesseract on tempfiles
 	tess = Tesseract.new(paths)
 	out = tess.run(lang: 'deu')
-        
-    # create attachments from result files
-	archive.call(CreateAttachmentFromFile, "#{out}.pdf", document.id, "ocr.pdf")
-	archive.call(CreateAttachmentFromFile, "#{out}.txt", document.id, "ocr.txt")
+    
+    # create attachment from result pdf file
+	handle = File.open("#{out}.pdf", "rb")
+	archive.call(DeleteAttachment, document.id, "ocr.pdf")
+	archive.call(CreateAttachmentFromFileHandle, document.id, "ocr.pdf", 0, handle, true)
+	handle.close()
+
+	# create attachments from result txt file
+	handle = File.open("#{out}.txt", "rb")
+	archive.call(DeleteAttachment, document.id, "ocr.txt")
+	archive.call(CreateAttachmentFromFileHandle, document.id, "ocr.txt", 0, handle, true)
+	handle.close()
 
 	# clean up
 	tess.close()
-  	return "archive"
+  	"archive"
 end
 
 # TODO?

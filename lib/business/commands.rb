@@ -3,11 +3,8 @@ require_relative "../domain/logic.rb"
 require_relative "queries.rb"
 require_relative "injector.rb"
 
-class Command
+class RenameAttachment
 	include Injector
-end
-
-class RenameAttachment < Command
 	inject(:context)
 	inject(:archive)
 
@@ -25,7 +22,8 @@ class RenameAttachment < Command
 	end
 end
 
-class MoveDocument < Command
+class MoveDocument
+	include Injector
 	inject(:context)
 
 	def initialize(doc_id, location)
@@ -42,7 +40,8 @@ class MoveDocument < Command
 	end
 end
 
-class SetDocumentTitle < Command
+class SetDocumentTitle
+	include Injector
 	inject(:context)
 
 	def initialize(doc_id, title)
@@ -57,7 +56,8 @@ class SetDocumentTitle < Command
 	end
 end
 
-class CreateNewDocument < Command
+class CreateNewDocument
+	include Injector
 	inject(:context)
 
 	def initialize(title, location=nil)
@@ -72,7 +72,8 @@ class CreateNewDocument < Command
 	end
 end
 
-class CreateNewAttachment < Command
+class CreateNewAttachment
+	include Injector
 	inject(:context)
 	inject(:archive)
 
@@ -90,13 +91,14 @@ class CreateNewAttachment < Command
 		document = doc_repo.read(Document.new(@doc_id, nil, nil, nil, nil, nil))
 		throw "document with id #{@doc_id} does not exists!" if not document
 
-		attachments = @archive.call(AttachmentsForDocument, @doc_id)
+		attachments = @archive.call(GetAttachmentsForDocument, @doc_id)
 		attachment = create_new_attachment(document, attachments, @name, @page)
 		att_repo.insert(attachment)
 	end
 end
 
-class ReattachAttachment < Command
+class ReattachAttachment
+	include Injector
 	inject(:context)
 	inject(:archive)
 
@@ -126,7 +128,8 @@ class ReattachAttachment < Command
 	end
 end
 
-class WriteFileFromAttachment < Command
+class WriteAttachmentDataToFileHandle
+	include Injector
 	inject(:context)
 	inject(:archive)
 
@@ -145,7 +148,8 @@ class WriteFileFromAttachment < Command
 	end
 end
 
-class CreateAttachmentFromFile < Command
+class CreateAttachmentFromFileHandle
+	include Injector
 	inject(:context)
 	inject(:archive)
 
@@ -169,7 +173,8 @@ class CreateAttachmentFromFile < Command
 	end
 end
 
-class TryTakeDocument < Command
+class TryTakeDocument
+	include Injector
 	inject(:context)
 	transaction(:immediate)
 
@@ -188,7 +193,8 @@ class TryTakeDocument < Command
 	end
 end
 
-class FreeDocument < Command
+class FreeDocument
+	include Injector
 	inject(:context)
 
 	def initialize(doc_id)
@@ -204,7 +210,8 @@ class FreeDocument < Command
 	end
 end
 
-class WriteAttachmentData < Command
+class WriteAttachmentData
+	include Injector
 	inject(:context)
 
 	def initialize(doc_id, name, data)
@@ -222,7 +229,8 @@ class WriteAttachmentData < Command
 	end
 end
 
-class DeleteAttachment < Command
+class DeleteAttachment
+	include Injector
 	inject(:context)
 
 	def initialize(doc_id, name)
@@ -232,6 +240,6 @@ class DeleteAttachment < Command
 
 	def call()
 		repo = @context.get_repo(Attachment)
-		repo.delete(Attachment.new(@doc_id, @name, nil, nil, nil))
+		repo.delete(Attachment.new(@name, @doc_id, nil, nil, nil))
 	end
 end

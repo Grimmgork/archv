@@ -24,8 +24,11 @@ class Worker
 		attachments = archive.call(GetAttachmentsForDocument, document.id, *@filenames)
 
 		begin
-			next_location = @work.call(archive, document, attachments)
+			next_location = archive.transaction() do 
+				@work.call(archive, document, attachments)
+			end
 			archive.call(MoveDocument, document.id, next_location || @location)
+			puts "#{@location} DONE: #{document.id} -> #{next_location}"
 		rescue => error
 			puts "#{@location} ERROR: #{error}"
 			archive.call(MoveDocument, document.id, "error")

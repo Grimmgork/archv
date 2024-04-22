@@ -1,9 +1,11 @@
 require "../lib/archive.rb"
 
 archive = Archive.new("data.db")
-
-handle = File.open("gopher.jpg", "rb")
-archive.call(CreateAttachmentFromFile, 1, "gopher2.jpg", 1, handle)
-handle.close()
-
+result = archive.transaction do
+	archive.call(DeleteAttachment, 1, "ocr.pdf")
+	archive.call(CreateNewAttachment, 1, "ocr.pdf", 0, "")
+	1
+end
 archive.close()
+
+puts result

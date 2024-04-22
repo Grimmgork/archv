@@ -1,24 +1,24 @@
 module Injector
-	
+
 	def self.included(base)
 		base.class_eval do
-			@@requirements = []
-			@@transaction_mode = :deferred
+			@requirements = []
+			@transaction_mode = nil
 
 			def self.inject(name)
-				@@requirements.append(name)
+				@requirements << name 
 			end
 
 			def self.transaction(mode)
-				@@transaction_mode = mode
+				@transaction_mode = mode
 			end
 
 			def self.transaction_mode
-				@@transaction_mode
+				return @transaction_mode
 			end
 
 			def self.requirements
-				@@requirements
+				return @requirements
 			end
 		end
 	end
