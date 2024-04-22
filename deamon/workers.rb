@@ -23,13 +23,13 @@ worker "ocr", ["%.jpg", "%.png"] do |archive, document, attachments|
     # create attachment from result pdf file
 	handle = File.open("#{out}.pdf", "rb")
 	archive.call(DeleteAttachment, document.id, "ocr.pdf")
-	archive.call(CreateAttachmentFromFileHandle, document.id, "ocr.pdf", 0, handle, true)
+	archive.call(CreateAttachmentFromFileHandle, document.id, "ocr.pdf", 0, handle)
 	handle.close()
 
 	# create attachments from result txt file
 	handle = File.open("#{out}.txt", "rb")
 	archive.call(DeleteAttachment, document.id, "ocr.txt")
-	archive.call(CreateAttachmentFromFileHandle, document.id, "ocr.txt", 0, handle, true)
+	archive.call(CreateAttachmentFromFileHandle, document.id, "ocr.txt", 0, handle)
 	handle.close()
 
 	# clean up

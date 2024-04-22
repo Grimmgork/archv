@@ -28,6 +28,8 @@ class Archive
 		@context.close()
 	end
 
+	private
+	
 	def inject_requirements(obj)
 		type = obj.class
 		type.requirements.each do |name|

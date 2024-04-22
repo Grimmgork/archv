@@ -143,4 +143,8 @@ class Repository
 	def from_row(row)
 		@from_row.call(row)
 	end
+
+	def get_fields()
+		@fields
+	end
 end

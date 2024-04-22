@@ -178,7 +178,7 @@ class TryTakeDocument
 	inject(:context)
 	transaction(:immediate)
 
-	def initialize(doc_id, timeout=nil)
+	def initialize(doc_id)
 		@doc_id = doc_id
 	end
 
