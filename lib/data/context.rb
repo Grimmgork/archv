@@ -22,26 +22,30 @@ class Context
 	end
 
 	def transaction(mode=nil)
+		if mode == :none
+			return yield
+		end
+
 		# if a transaction is running, use a savepoint
 		if @db.transaction_active?
-			throw "cannot switch transaction mode from #{@transaction_mode} to #{mode} inside an transaction!" if mode and (mode != @transaction_mode)
+			throw "cannot switch transaction mode from #{@transaction_mode} to #{mode} inside an active transaction!" if not nestable_transation_mode(@transaction_mode, mode)
 			return savepoint() do
 				yield
 			end
 		end
 
-		@transaction_mode = mode || :deferred
+		@transaction_mode = mode
 		@savepoint_counter = 0
 
-		@db.execute("BEGIN TRANSACTION #{@transaction_mode.to_s.upcase};")
+		@db.transaction(@transaction_mode)
 		result = nil
 		begin
 			result = yield()
 		rescue
-			@db.execute("ROLLBACK;")
+			@db.rollback
 			raise
 		end
-		@db.execute("COMMIT;")
+		@db.commit
 		return result
 	end
 
@@ -79,6 +83,14 @@ class Context
 	end
 
 	private
+
+	def nestable_transation_mode(parent, child)
+		return true if parent == child
+		return true if parent == :exclusive and child == :deferred
+		return true if parent == :exclusive and child == :immediate
+		return true if parent == :immediate and child == :deferred
+		return false
+	end
 	
 	def savepoint()
 		name = "sf_#{@savepoint_counter}"

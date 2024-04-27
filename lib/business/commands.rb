@@ -5,6 +5,7 @@ require_relative "injector.rb"
 
 class RenameAttachment
 	include Injector
+	transaction(:immediate)
 	inject(:context)
 	inject(:archive)
 
@@ -24,6 +25,7 @@ end
 
 class MoveDocument
 	include Injector
+	transaction(:immediate)
 	inject(:context)
 
 	def initialize(doc_id, location)
@@ -42,6 +44,7 @@ end
 
 class SetDocumentTitle
 	include Injector
+	transaction(:immediate)
 	inject(:context)
 
 	def initialize(doc_id, title)
@@ -58,6 +61,7 @@ end
 
 class CreateNewDocument
 	include Injector
+	transaction(:immediate)
 	inject(:context)
 
 	def initialize(title, location=nil)
@@ -74,6 +78,7 @@ end
 
 class CreateNewAttachment
 	include Injector
+	transaction(:immediate)
 	inject(:context)
 	inject(:archive)
 
@@ -99,6 +104,7 @@ end
 
 class ReattachAttachment
 	include Injector
+	transaction(:immediate)
 	inject(:context)
 	inject(:archive)
 
@@ -130,6 +136,7 @@ end
 
 class WriteAttachmentDataToFileHandle
 	include Injector
+	transaction(:immediate)
 	inject(:context)
 	inject(:archive)
 
@@ -150,6 +157,7 @@ end
 
 class CreateAttachmentFromFileHandle
 	include Injector
+	transaction(:immediate)
 	inject(:context)
 	inject(:archive)
 
@@ -176,7 +184,7 @@ end
 class TryTakeDocument
 	include Injector
 	inject(:context)
-	transaction(:immediate)
+	transaction(:exclusive)
 
 	def initialize(doc_id)
 		@doc_id = doc_id
@@ -195,6 +203,7 @@ end
 
 class FreeDocument
 	include Injector
+	transaction(:exclusive)
 	inject(:context)
 
 	def initialize(doc_id)
@@ -212,6 +221,7 @@ end
 
 class WriteAttachmentData
 	include Injector
+	transaction(:immediate)
 	inject(:context)
 
 	def initialize(doc_id, name, data)
@@ -231,6 +241,7 @@ end
 
 class DeleteAttachment
 	include Injector
+	transaction(:immediate)
 	inject(:context)
 
 	def initialize(doc_id, name)

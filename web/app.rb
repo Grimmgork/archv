@@ -51,9 +51,10 @@ class App < Roda
 			data = file[:tempfile].read
 			filename = file[:filename].force_encoding(Encoding::UTF_8)
 			
-			archive.transaction do
+			archive.transaction :immediate do
 				archive.call(CreateNewAttachment, doc_id, filename, page)
 				archive.call(WriteAttachmentData, doc_id, filename, data)
+				throw "asdfg"
 			end
 		end
 

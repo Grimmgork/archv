@@ -13,6 +13,7 @@ class Archive
 		command = type.allocate()
 		inject_requirements(command)
 		command.send(:initialize, *args, &block)
+		throw "command #{type} has no transaction mode defined!" if not type.transaction_mode
 		@context.transaction(type.transaction_mode) do
 			command.call()
 		end
