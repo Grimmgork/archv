@@ -75,7 +75,7 @@ class KeywordSearch
 	end
 
 	def call()
-
+		throw "not implemented!"
 	end
 end
 
