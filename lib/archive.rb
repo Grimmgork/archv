@@ -1,50 +1,33 @@
-require_relative "./data/context.rb"
-
+require_relative "./data/data_context.rb"
+require_relative "./data/repository.rb"
+require_relative "./domain/domain.rb"
 require_relative "./business/commands.rb"
 require_relative "./business/queries.rb"
 
 class Archive
 
 	def initialize(path)
-		@context = Context.new(path)
+		@data = DataContext.new(path)
 	end
 
 	def call(type, *args, &block)
-		command = type.allocate()
-		inject_requirements(command)
-		command.send(:initialize, *args, &block)
-		throw "command #{type} has no transaction mode defined!" if not type.transaction_mode
-		@context.transaction(type.transaction_mode) do
-			command.call()
+		transaction = type.transaction if type.respond_to?(:transaction)
+		@data.transaction(transaction) do
+			type.call(self, *args, &block)
 		end
 	end
 
+	def data
+		@data
+	end
+
 	def transaction(mode=nil)
-		@context.transaction(mode) do
+		@data.transaction(mode) do
 			yield
 		end
 	end
 
 	def close()
-		@context.close()
-	end
-
-	private
-	
-	def inject_requirements(obj)
-		type = obj.class
-		type.requirements.each do |name|
-			obj.instance_variable_set("@#{name}", get_requirement(name))
-		end
-	end
-
-	def get_requirement(name)
-		case name
-		when :archive
-			self
-		when :context
-			@context
-		end
+		@data.close()
 	end
 end
-

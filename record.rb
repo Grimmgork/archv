@@ -1,4 +1,3 @@
-
 class Record < Data
 	def clone(**setters)
 		values = deconstruct()
@@ -10,7 +9,12 @@ class Record < Data
 	end
 end
 
-Attachment = Record.define(:name, :doc_id, :page, :size, :mtime)
-Document = Record.define(:id, :title, :timestamp, :location, :last_moved, :taken)
+Attachment = Record.define(
+	:name, 
+	:doc_id, 
+	:page, 
+	:size, 
+	:mtime
+)
 
-DocumentAggregate = Record.define(:document, :attachments, :data)
+print Attachment.new("asdf", 1, 2, 100, 10)

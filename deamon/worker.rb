@@ -1,5 +1,25 @@
 require_relative "../lib/archive.rb"
 
+class WorkContext
+	def initialize(archive, document, attachments)
+		@archive = archive
+		@document = document
+		@attachments = attachments
+	end
+
+	def archive
+		@archive
+	end
+
+	def document
+		@document
+	end
+
+	def attachments
+		@attachments
+	end
+end
+
 class Worker
 	def initialize(location, filenames, &block)
 		@work = block

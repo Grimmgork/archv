@@ -1,199 +1,194 @@
-require_relative "../domain/models.rb"
-require_relative "../domain/logic.rb"
-require_relative "queries.rb"
-require_relative "injector.rb"
 
-class RenameAttachment
-	include Injector
-	transaction(:immediate)
-	inject(:context)
-	inject(:archive)
+module RepositoryFactory
+	module_function
 
-	def initialize(doc_id, from, to)
-		@doc_id = doc_id
-		@from = from
-		@to = to
+	def call(context, type)
+		if type == Attachment
+			to_row = Proc.new do |obj|
+				[ "/#{obj.doc_id}/#{obj.name}", obj.page, obj.size, obj.mtime ]
+			end
+			from_row = Proc.new do |row|
+				doc_id, name = row[0].split("/").reject { |s| s.nil? || s.empty? }
+				Attachment.new(name, doc_id, row[1], row[2], row[3])
+			end
+			return Repository.new(context.data, "sqlar", [ "name", "page", "sz", "mtime" ], false, from_row, to_row)
+		end
+
+		if type == Document
+			to_row = Proc.new do |obj|
+				[ obj.id, obj.title, obj.timestamp, obj.location, obj.last_moved, obj.taken ]
+			end
+			from_row = Proc.new do |row|
+				Document.new(row[0], row[1], row[2], row[3], row[4], row[5])
+			end
+			return Repository.new(context.data, "document", [ "id", "title", "timestamp", "location", "last_moved", "taken" ], true, from_row, to_row)
+		end
+
+		throw "No repository defined for type #{type}!"
+	end
+end
+
+module RenameAttachment
+	extend DomainLogic
+	module_function
+
+	def transaction 
+		:immediate
 	end
 
-	def call()
-		attachments = @archive.call(AttachmentsForDocument, @doc_id)
-		repo = @context.get_repo(Attachment)
+	def call(context, doc_id, from, to)
+		attachments = context.call(AttachmentsForDocument, doc_id)
+		repo = context.call(RepositoryFactory, Attachment)
 		attachment = rename_attachment(attachments, from, to)
 		repo.update(attachment)
 	end
 end
 
-class MoveDocument
-	include Injector
-	transaction(:immediate)
-	inject(:context)
+module MoveDocument
+	extend DomainLogic
+	module_function
 
-	def initialize(doc_id, location)
-		@doc_id = doc_id
-		@location = location
+	def transaction 
+		:immediate
 	end
 
-	def call()
-		repo = @context.get_repo(Document)
-		document = repo.read(Document.new(@doc_id, nil, nil, nil, nil, nil))
-		throw "document with id #{@doc_id} does not exist!" if not document
-		document = move_document(document, @location)
+	def call(context, doc_id, location)
+		repo = context.call(RepositoryFactory, Document)
+		document = repo.read(Document.new(doc_id, nil, nil, nil, nil, nil))
+		throw "document with id #{doc_id} does not exist!" if not document
+		document = move_document(document, location)
 		repo.update(document)
 	end
 end
 
-class SetDocumentTitle
-	include Injector
-	transaction(:immediate)
-	inject(:context)
+module SetDocumentTitle
+	extend DomainLogic
+	module_function
 
-	def initialize(doc_id, title)
-		@doc_id = doc_id
-		@title = title
+	def transaction
+		:immediate
 	end
 
-	def call()
-		repo = @context.get_repo(Document)
-		document = repo.read(Document.new(@doc_id, nil, nil, nil, nil, nil))
+	def call(context, doc_id, title)
+		repo = context.call(RepositoryFactory, Document)
+		document = repo.read(Document.new(doc_id, nil, nil, nil, nil, nil))
 		throw "not implemented!"
 	end
 end
 
-class CreateNewDocument
-	include Injector
-	transaction(:immediate)
-	inject(:context)
+module CreateNewDocument
+	extend DomainLogic
+	module_function
 
-	def initialize(title, location=nil)
-		@title = title
-		@location = location
+	def transaction
+		:immediate
 	end
 
-	def call()
-		repo = @context.get_repo(Document)
-		attachment = create_new_document(@title, @location || "new")
+	def call(context, title, location)
+		repo = context.call(RepositoryFactory, Document)
+		attachment = create_new_document(title, location || "new")
 		repo.insert(attachment)
 	end
 end
 
-class CreateNewAttachment
-	include Injector
-	transaction(:immediate)
-	inject(:context)
-	inject(:archive)
+module CreateNewAttachment
+	extend DomainLogic
+	module_function
 
-	def initialize(doc_id, name, page, data=nil)
-		@doc_id = doc_id
-		@name = name
-		@page = page
-		@data = data
+	def transaction
+		:immediate
 	end
 
-	def call()
-		doc_repo = @context.get_repo(Document)
-		att_repo = @context.get_repo(Attachment)
+	def call(context, doc_id, name, page, data=nil)
+		doc_repo = context.call(RepositoryFactory, Document)
+		att_repo = context.call(RepositoryFactory, Attachment)
 
-		document = doc_repo.read(Document.new(@doc_id, nil, nil, nil, nil, nil))
-		throw "document with id #{@doc_id} does not exists!" if not document
+		document = doc_repo.read(Document.new(doc_id, nil, nil, nil, nil, nil))
+		throw "document with id #{doc_id} does not exists!" if not document
 
-		attachments = @archive.call(GetAttachmentsForDocument, @doc_id)
-		attachment = create_new_attachment(document, attachments, @name, @page)
+		attachments = context.call(GetAttachmentsForDocument, doc_id)
+		attachment = create_new_attachment(document, attachments, name, page)
 		att_repo.insert(attachment)
 	end
 end
 
-class ReattachAttachment
-	include Injector
-	transaction(:immediate)
-	inject(:context)
-	inject(:archive)
+module ReattachAttachment
+	extend DomainLogic
+	module_function
 
-	def initialize(doc_id, att_name, new_doc_id)
-		@doc_id = doc_id
-		@att_name = att_name
-		@new_doc_id = new_doc_id
+	def transaction
+		:immediate
 	end
 
-	def call()
-		doc_repo = @context.get_repo(Document)
-		att_repo = @context.get_repo(Attachment)
+	def call(context, doc_id, att_name, new_doc_id)
+		doc_repo = context.call(RepositoryFactory, Document)
+		att_repo = context.call(RepositoryFactory, Attachment)
 
-		from_document = doc_repo.read(Document.new(@doc_id))
-		to_document = doc_repo.read(Document.new(@new_doc_id))
+		from_document = doc_repo.read(Document.new(doc_id))
+		to_document = doc_repo.read(Document.new(new_doc_id))
 
-		throw "document with id #{@doc_id} does not exist!" if not from_document
-		throw "document with id #{@new_doc_id} does not exist!" if not to_document
+		throw "document with id #{doc_id} does not exist!" if not from_document
+		throw "document with id #{new_doc_id} does not exist!" if not to_document
 
-		attachment = att_repo.read(Attachment.new(@att_name, @doc_id, nil, nil, nil))
-		throw "attachment with name #{@att_name} does not exist for document with id #{@doc_id}" if not attachment
+		attachment = att_repo.read(Attachment.new(att_name, doc_id, nil, nil, nil))
+		throw "attachment with name #{att_name} does not exist for document with id #{doc_id}" if not attachment
 		
-		attachments = @archive.call(AttachmentsForDocument, @doc_id)
+		attachments = context.call(AttachmentsForDocument, doc_id)
 		attachment = reattach_attachment(attachment, to_document, attachments)
 
 		att_repo.update(attachment)
 	end
 end
 
-class WriteAttachmentDataToFileHandle
-	include Injector
-	transaction(:immediate)
-	inject(:context)
-	inject(:archive)
+module WriteAttachmentDataToFileHandle
+	module_function
 
-	def initialize(doc_id, name, handle)
-		@doc_id = doc_id
-		@name = name
-		@handle = handle
+	def transaction
+		:immediate
 	end
 
-	def call()
-		repo = @context.get_repo(Attachment)
-		attachment = repo.read(Attachment.new(@name, @doc_id, nil, nil, nil))
-		throw "attachment with name #{@name} does not exist for document with id #{@doc_id}" if not attachment
-		data = @archive.call(ReadAttachmentData, @doc_id, @name)
-		@handle.write(data)
+	def call(context, doc_id, name, handle)
+		repo = context.call(RepositoryFactory, Attachment)
+		attachment = repo.read(Attachment.new(name, doc_id, nil, nil, nil))
+		throw "attachment with name #{name} does not exist for document with id #{doc_id}" if not attachment
+		data = context.call(ReadAttachmentData, doc_id, name)
+		handle.write(data)
 	end
 end
 
-class CreateAttachmentFromFileHandle
-	include Injector
-	transaction(:immediate)
-	inject(:context)
-	inject(:archive)
+module CreateAttachmentFromFileHandle
+	extend DomainLogic
+	module_function
 
-	def initialize(doc_id, name, page, handle)
-		@doc_id = doc_id
-		@name = name
-		@handle = handle
-		@page = page
+	def transaction
+		:immediate
 	end
 
-	def call()
-		att_repo = @context.get_repo(Attachment)
-		doc_repo = @context.get_repo(Document)
-		document = doc_repo.read(Document.new(@doc_id, nil, nil, nil, nil, nil))
-		throw "document with id #{@doc_id} does not exist!" if not document
-		attachments = @archive.call(GetAttachmentsForDocument, @doc_id)
-		attachment = create_new_attachment(document, attachments, @name, @page)
+	def call(context, doc_id, name, page, handle)
+		att_repo = context.call(RepositoryFactory, Attachment)
+		doc_repo = context.call(RepositoryFactory, Document)
+		document = doc_repo.read(Document.new(doc_id, nil, nil, nil, nil, nil))
+		throw "document with id #{doc_id} does not exist!" if not document
+		attachments = context.call(GetAttachmentsForDocument, doc_id)
+		attachment = create_new_attachment(document, attachments, name, page)
 		att_repo.insert(attachment)
-		data = @handle.read()
-		@archive.call(WriteAttachmentData, @doc_id, @name, data)
+		data = handle.read()
+		archive.call(WriteAttachmentData, doc_id, name, data)
 	end
 end
 
-class TryTakeDocument
-	include Injector
-	inject(:context)
-	transaction(:exclusive)
+module TryTakeDocument
+	extend DomainLogic
+	module_function
 
-	def initialize(doc_id)
-		@doc_id = doc_id
+	def transaction
+		:immediate
 	end
 
-	def call()
-		repo = @context.get_repo(Document)
-		document = repo.read(Document.new(@doc_id, nil, nil, nil, nil, nil))
-		throw "document with id #{@doc_id} does not exist!" if not document
+	def call(context, doc_id)
+		repo = context.call(RepositoryFactory, Document)
+		document = repo.read(Document.new(doc_id, nil, nil, nil, nil, nil))
+		throw "document with id #{doc_id} does not exist!" if not document
 		document = try_take_document(document)
 		return false if not document
 		repo.update(document)
@@ -201,56 +196,48 @@ class TryTakeDocument
 	end
 end
 
-class FreeDocument
-	include Injector
-	transaction(:exclusive)
-	inject(:context)
+module FreeDocument
+	extend DomainLogic
+	module_function
 
-	def initialize(doc_id)
-		@doc_id = doc_id
+	def transaction
+		:immediate
 	end
 
-	def call()
-		repo = @context.get_repo(Document)
-		document = repo.read(Document.new(@doc_id, nil, nil, nil, nil, nil))
-		throw "document with id #{@doc_id} does not exist!" if not document
+	def call(context, doc_id)
+		repo = context.call(RepositoryFactory, Document)
+		document = repo.read(Document.new(doc_id, nil, nil, nil, nil, nil))
+		throw "document with id #{doc_id} does not exist!" if not document
 		document = free_document(document)
 		repo.update(document)
 	end
 end
 
-class WriteAttachmentData
-	include Injector
-	transaction(:immediate)
-	inject(:context)
+module WriteAttachmentData
+	module_function
 
-	def initialize(doc_id, name, data)
-		@doc_id = doc_id
-		@name = name
-		@data = data
+	def transaction
+		:immediate
 	end
 
-	def call()
-		repo = @context.get_repo(Attachment)
-		attachment = repo.read(Attachment.new(@name, @doc_id, nil, nil, nil))
-		throw "attachment with name #{@name} does not exist for document with id #{@doc_id}!" if not attachment
-		name = "/#{@doc_id}/#{@name}"
-		@context.execute("UPDATE sqlar SET data=?, sz=? WHERE name=?;", @data, @data.length, name)
+	def call(context, doc_id, name, data)
+		repo = context.call(RepositoryFactory, Attachment)
+		attachment = repo.read(Attachment.new(name, doc_id, nil, nil, nil))
+		throw "attachment with name #{name} does not exist for document with id #{doc_id}!" if not attachment
+		name = "/#{doc_id}/#{name}"
+		context.data.execute("UPDATE sqlar SET data=?, sz=? WHERE name=?;", data, data.length, name)
 	end
 end
 
-class DeleteAttachment
-	include Injector
-	transaction(:immediate)
-	inject(:context)
+module DeleteAttachment
+	module_function
 
-	def initialize(doc_id, name)
-		@doc_id = doc_id
-		@name = name
+	def transaction
+		:immediate
 	end
 
-	def call()
-		repo = @context.get_repo(Attachment)
-		repo.delete(Attachment.new(@name, @doc_id, nil, nil, nil))
+	def call(context, doc_id, name)
+		repo = context.call(RepositoryFactory, Attachment)
+		repo.delete(Attachment.new(name, doc_id, nil, nil, nil))
 	end
 end

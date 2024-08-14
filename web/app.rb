@@ -1,11 +1,7 @@
 require 'roda'
 require 'json'
-require 'htmplt'
 require '../lib/archive.rb'
-require './render.rb'
 
-
-# CONFIG
 class App < Roda
 	plugin :json, classes: [Array, Hash, Document, Attachment, Integer]
 	plugin :halt
@@ -14,8 +10,12 @@ class App < Roda
 	plugin :all_verbs
 	plugin :public, root: 'static'
 	plugin :environments
+	plugin :streaming
+	plugin :custom_block_results
+
 	route do |r|
 		archive = r.env["CONTEXT"]
+		render = r.env["RENDER"]
 
 		r.on 'static' do
 			r.public # serve static files
@@ -54,7 +54,6 @@ class App < Roda
 			archive.transaction :immediate do
 				archive.call(CreateNewAttachment, doc_id, filename, page)
 				archive.call(WriteAttachmentData, doc_id, filename, data)
-				throw "asdfg"
 			end
 		end
 
@@ -75,14 +74,5 @@ class App < Roda
 			}
 			r.halt(200, headers, data)
 		end
-	end
-
-	def update_from_hash(entity, hash, properties)
-		properties.each do |prop|
-			if hash.key?(prop.to_s)
-				entity[prop] = hash[prop.to_s]
-			end
-		end
-		entity
 	end
 end
