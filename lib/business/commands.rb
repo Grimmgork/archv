@@ -29,7 +29,6 @@ module RepositoryFactory
 end
 
 module RenameAttachment
-	extend DomainLogic
 	module_function
 
 	def transaction 
@@ -39,13 +38,12 @@ module RenameAttachment
 	def call(context, doc_id, from, to)
 		attachments = context.call(AttachmentsForDocument, doc_id)
 		repo = context.call(RepositoryFactory, Attachment)
-		attachment = rename_attachment(attachments, from, to)
+		attachment = Logic.rename_attachment(attachments, from, to)
 		repo.update(attachment)
 	end
 end
 
 module MoveDocument
-	extend DomainLogic
 	module_function
 
 	def transaction 
@@ -56,13 +54,13 @@ module MoveDocument
 		repo = context.call(RepositoryFactory, Document)
 		document = repo.read(Document.new(doc_id, nil, nil, nil, nil, nil))
 		throw "document with id #{doc_id} does not exist!" if not document
-		document = move_document(document, location)
+		document = Logic.move_document(document, location)
 		repo.update(document)
 	end
 end
 
 module SetDocumentTitle
-	extend DomainLogic
+	extend Logic
 	module_function
 
 	def transaction
@@ -77,7 +75,7 @@ module SetDocumentTitle
 end
 
 module CreateNewDocument
-	extend DomainLogic
+	extend Logic
 	module_function
 
 	def transaction
@@ -92,7 +90,6 @@ module CreateNewDocument
 end
 
 module CreateNewAttachment
-	extend DomainLogic
 	module_function
 
 	def transaction
@@ -107,13 +104,12 @@ module CreateNewAttachment
 		throw "document with id #{doc_id} does not exists!" if not document
 
 		attachments = context.call(GetAttachmentsForDocument, doc_id)
-		attachment = create_new_attachment(document, attachments, name, page)
+		attachment = Logic.create_new_attachment(document, attachments, name, page)
 		att_repo.insert(attachment)
 	end
 end
 
 module ReattachAttachment
-	extend DomainLogic
 	module_function
 
 	def transaction
@@ -134,7 +130,7 @@ module ReattachAttachment
 		throw "attachment with name #{att_name} does not exist for document with id #{doc_id}" if not attachment
 		
 		attachments = context.call(AttachmentsForDocument, doc_id)
-		attachment = reattach_attachment(attachment, to_document, attachments)
+		attachment = Logic.reattach_attachment(attachment, to_document, attachments)
 
 		att_repo.update(attachment)
 	end
@@ -157,7 +153,6 @@ module WriteAttachmentDataToFileHandle
 end
 
 module CreateAttachmentFromFileHandle
-	extend DomainLogic
 	module_function
 
 	def transaction
@@ -170,7 +165,7 @@ module CreateAttachmentFromFileHandle
 		document = doc_repo.read(Document.new(doc_id, nil, nil, nil, nil, nil))
 		throw "document with id #{doc_id} does not exist!" if not document
 		attachments = context.call(GetAttachmentsForDocument, doc_id)
-		attachment = create_new_attachment(document, attachments, name, page)
+		attachment = Logic.create_new_attachment(document, attachments, name, page)
 		att_repo.insert(attachment)
 		data = handle.read()
 		archive.call(WriteAttachmentData, doc_id, name, data)
@@ -178,7 +173,6 @@ module CreateAttachmentFromFileHandle
 end
 
 module TryTakeDocument
-	extend DomainLogic
 	module_function
 
 	def transaction
@@ -189,7 +183,7 @@ module TryTakeDocument
 		repo = context.call(RepositoryFactory, Document)
 		document = repo.read(Document.new(doc_id, nil, nil, nil, nil, nil))
 		throw "document with id #{doc_id} does not exist!" if not document
-		document = try_take_document(document)
+		document = Logic.try_take_document(document)
 		return false if not document
 		repo.update(document)
 		return true
@@ -197,7 +191,6 @@ module TryTakeDocument
 end
 
 module FreeDocument
-	extend DomainLogic
 	module_function
 
 	def transaction
@@ -208,7 +201,7 @@ module FreeDocument
 		repo = context.call(RepositoryFactory, Document)
 		document = repo.read(Document.new(doc_id, nil, nil, nil, nil, nil))
 		throw "document with id #{doc_id} does not exist!" if not document
-		document = free_document(document)
+		document = Logic.free_document(document)
 		repo.update(document)
 	end
 end

@@ -1,8 +1,7 @@
 require_relative "./data/data_context.rb"
 require_relative "./data/repository.rb"
-require_relative "./domain/domain.rb"
-require_relative "./business/commands.rb"
-require_relative "./business/queries.rb"
+require_relative "./domain/attachment.rb"
+require_relative "./domain/document.rb"
 
 class Archive
 
