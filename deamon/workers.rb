@@ -11,7 +11,7 @@ worker "ocr", ["%.jpg", "%.png"] do |context|
   	paths = context.attachments.map do |attch|
 		path = Dir::Tmpname.create(['attch', ".#{attch.name}"]) {}
 		fh = File.open(path, "wb")
-		context.archive.call(WriteAttachmentDataToFileHandle, context.document.id, attch.name, fh)
+		context.archive.call(ReadAttachmentData, context.document.id, attch.name, fh)
 		fh.close()
 		path
 	end

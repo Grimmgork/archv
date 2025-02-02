@@ -1,0 +1,6 @@
+<h1>Documents:</h1>
+<ul>
+	<% documents.each do |document| %>
+		<li><a href="/ui/document/<%= document.id %>"><%= document.title %></a></li>
+	<% end %>
+</ul>

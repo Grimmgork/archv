@@ -50,15 +50,15 @@ module Logic
 	
 	def try_take_document(document)
 		return nil if document.taken != 0
-		return document.clone(taken: 1)
+		return document.with(taken: 1)
 	end
 	
 	def free_document(document)
-		return document.clone(taken: 0)
+		return document.with(taken: 0)
 	end
 	
 	def move_document(document, location)
-		return document.clone(location: location)
+		return document.with(location: location)
 	end
 	
 	def update_attachment_data(attachment, size)

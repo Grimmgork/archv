@@ -1,7 +1,16 @@
-require_relative "./data/data_context.rb"
-require_relative "./data/repository.rb"
-require_relative "./domain/attachment.rb"
-require_relative "./domain/document.rb"
+require_relative "data/data_context.rb"
+require_relative "data/repository.rb"
+require_relative "domain/attachment.rb"
+require_relative "domain/document.rb"
+
+def require_relative_glob(glob)
+	Dir.glob(File.expand_path(glob, File.dirname(__FILE__))).each do |file|
+		require file
+	end
+end
+
+require_relative_glob "commands/*"
+require_relative_glob "queries/*"
 
 class Archive
 

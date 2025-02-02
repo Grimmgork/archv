@@ -1,5 +1,5 @@
 class Record < Data
-	def clone(**setters)
+	def with(**setters)
 		values = deconstruct()
 		setters.each do |setter, value|
 			index = members.index(setter)
