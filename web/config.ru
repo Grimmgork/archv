@@ -4,6 +4,8 @@ require 'dotenv/load'
 
 require_relative "../lib/archive.rb"
 
+
+
 class ContextProvider
 	def initialize(app)
 		@app = app
@@ -14,12 +16,12 @@ class ContextProvider
 		env["CONTEXT"] = archive
 		begin
 			res = @app.call(env)
+			archive.close()
+			res
 		rescue
 			archive.close()
 			raise
 		end
-		archive.close()
-		res
 	end
 end
 
@@ -35,11 +37,30 @@ class App < Roda
 	plugin :custom_block_results
 	plugin :render, escape: true
 
+	def mime_from_filename(filename)
+		mimes = {
+			"txt"  => "text/plain",
+			"json" => "application/json",
+			"csv"  => "text/csv",
+			"jpg"  => "image/jpeg",
+			"jpeg" => "image/jpeg",
+			"png"  => "image/png",
+			"pdf"  => "application/pdf",
+		}
+
+		ext = filename.split(".").last
+		mimes[ext]
+	end
+
 	route do |r|
 		archive = r.env["CONTEXT"]
 
 		r.on 'static' do
 			r.public # serve static files
+		end
+
+		r.on "" do
+			r.redirect "ui"
 		end
 
 		r.get "api", "document", Integer do |id|
@@ -90,8 +111,8 @@ class App < Roda
 			r.halt(404) if not attachment
 			data = archive.call(ReadAttachmentData, doc_id, att_name)
 			headers = {
-				"Content-Type" => "application/octet-stream",
-				"Content-Disposition" => "attachment; filename=\"#{attachment.name}\""
+			 	"Content-Type" => mime_from_filename(attachment.name),
+				"Content-Disposition" => "inline; filename=\"#{attachment.name}\""
 			}
 			r.halt(200, headers, data)
 		end

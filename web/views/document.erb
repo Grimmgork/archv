@@ -1,16 +1,19 @@
 <h1>Document:</h1>
-<h2><%= document.title %></h2>
 <dl>
+	<dt>Title</dt>
+	<dd><%= document.title %></dd>
 	<dt>Timestamp</dt>
     <dd><%= document.timestamp %></dd>
     <dt>Location</dt>
     <dd><%= document.location %></dd>
 	<dt>Last moved</dt>
     <dd><%= document.last_moved %></dd>
+	<dt>Id</dt>
+    <dd>#<%= document.id %></dd>
 </dl>
 <h2>Attachments:</h2>
 <ul>
 	<% attachments.each do |attachment| %>
-		<li><a><%= attachment.name %></a></li>
+		<li><a target="_blank" href="/api/document/<%= document.id %>/attachment/<%= attachment.name %>/data"><%= attachment.name %></a></li>
 	<% end %>
 </ul>
