@@ -3,7 +3,7 @@ module Archivum::Query::Document::Newest
 
 	def call(context, top)
 		context.data.execute("SELECT id, title, timestamp, location, last_moved, taken FROM document ORDER BY timestamp DESC LIMIT ?", top) do |row|
-			Document.new(*row)
+			Archivum::Model::Document.new(*row)
 		end
 	end
 end

@@ -3,22 +3,19 @@ require_relative './worker.rb'
 
 class Workers
 
-	def initialize()
-		@workers = []
+	def initialize(workers)
+		@workers = workers
 	end
 
-	def worker(location, filenames, &block)
+	def worker(location, *filenames, &block)
 		@workers << Worker.new(location, filenames, &block)
 	end
 
-	def workers
-		@workers
-	end
-
 	def self.configure(code)
-		instance = Workers.new()
+		workers = []
+		instance = Workers.new(workers)
 		instance.get_binding.eval(code)
-		instance.workers
+		workers
 	end
 
 	def get_binding
@@ -40,7 +37,7 @@ cancel = false
 for worker in workers
 	thread = Thread.new(worker) do |worker|
 		puts "starting worker ->"
-		archive = Archive.new(DATABASE)
+		archive = Archivum::Archive.new(DATABASE)
 		while not cancel do
 			worker.run(archive)
 			sleep(WORK_DELAY)

@@ -6,7 +6,7 @@ module Archivum::Command::Attachment::Create
 		:immediate
 	end
 
-	def call(context, doc_id, name, page, data=nil)
+	def call(context, doc_id, name, page)
 		doc_repo = context.call(RepositoryFactory, Archivum::Model::Document)
 		att_repo = context.call(RepositoryFactory, Archivum::Model::Attachment)
 

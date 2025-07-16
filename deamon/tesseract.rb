@@ -13,7 +13,7 @@ class Tesseract
 			throw "cannot use '#{lang}' as parameter!"
 		end
 		# run tesseract on scanlist
-		res = system("tesseract #{@scanlist} #{@scanlist} --oem #{oem} --psm #{psm} -l #{lang} pdf txt")
+		res = system("tesseract", @scanlist, "--oem", oem, "--psm", psm, "-l", lang, "pdf", "txt")
 		if res==nil or not res
 			throw "an error occured while running tesseract!"
 		end

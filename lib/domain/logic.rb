@@ -48,7 +48,7 @@ module Archivum::Logic
 	end
 	
 	def try_take_document(document)
-		return nil if document.taken
+		return nil if document.taken == 1
 		document.with(taken: 1)
 	end
 	
