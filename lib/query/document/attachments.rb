@@ -17,7 +17,7 @@ module Archivum::Query::Document::Attachments
 		
 		context.data.execute("SELECT name, page, sz, mtime, doc_id FROM sqlar WHERE #{statements.join(" OR ")} ORDER BY mtime;", *args) do |row|
 			doc_id, name = row[0].split("/").reject { |s| s.nil? || s.empty? }
-			Attachment.new(name, doc_id, row[1], row[2], row[3])
+			Archivum::Model::Attachment.new(name, doc_id, row[1], row[2], row[3])
 		end
 	end
 end

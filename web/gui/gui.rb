@@ -3,6 +3,13 @@ class Gui < Roda
 
 	plugin :public, root: 'static'
 	plugin :render, escape: true
+	plugin :halt
+	plugin :error_handler
+
+	
+	error do |e|
+		e.to_s
+	end
 
 	route do |r|
 		archive = r.env['context']
@@ -27,6 +34,16 @@ class Gui < Roda
 				document: document,
 				attachments: attachments
 			}
+		end
+
+		r.get "document/create" do
+			view "create_document"
+		end
+
+		r.post "document/create" do
+			title = r.params["title"]
+			id = archive.call(Archivum::Command::Document::Create, title)
+			r.halt(200, { 'HX-Redirect' => "/gui/document/#{id}" }, "")
 		end
 	end
 end

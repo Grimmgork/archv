@@ -61,15 +61,15 @@ class Api < Roda
 
 		r.get "document", Integer, "attachment", String do |doc_id, att_name|
 			r.halt(400) if not att_name
-			attachment = archive.call(GetAttachmentByName, doc_id, att_name)
+			attachment = archive.call(Archivum::Query::Attachment::ByName, doc_id, att_name)
 			r.halt(404) if not attachment
 			attachment.to_h
 		end
 
 		r.get "document", Integer, "attachment", String, "data" do |doc_id, att_name|
-			attachment = archive.call(GetAttachmentByName, doc_id, att_name)
+			attachment = archive.call(Archivum::Query::Attachment::ByName, doc_id, att_name)
 			r.halt(404) if not attachment
-			data = archive.call(ReadAttachmentData, doc_id, att_name)
+			data = archive.call(Archivum::Query::Attachment::ReadData, doc_id, att_name)
 			headers = {
 				"Content-Type" => mime_from_filename(attachment.name),
 				"Content-Disposition" => "inline; filename=\"#{attachment.name}\""
