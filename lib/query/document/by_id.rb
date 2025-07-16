@@ -1,4 +1,4 @@
-module GetDocumentById
+module Archivum::Query::Document::ById
 	module_function
 
 	def call(context, id)

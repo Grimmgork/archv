@@ -1,4 +1,4 @@
-module GetNewestDocuments
+module Archivum::Query::Document::Newest
 	module_function
 
 	def call(context, top)

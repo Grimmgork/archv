@@ -1,4 +1,4 @@
-module GetUntakenDocumentsByLocation
+module Archivum::Query::Document::UntakenByLocation
 	module_function
 
 	def call(context, location)

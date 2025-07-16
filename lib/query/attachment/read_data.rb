@@ -1,4 +1,4 @@
-module ReadAttachmentData
+module Archivum::Query::Attachment::ReadData
 	module_function
 
 	def call(context, doc_id, name, handle = nil)

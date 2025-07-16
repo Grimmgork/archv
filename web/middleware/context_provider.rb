@@ -6,7 +6,7 @@ class ContextProvider
 	end
 
 	def call(env)
-		archive = Archive.new(ENV["DBPATH"])
+		archive = Archivum::Archive.new(ENV["DBPATH"])
 		env['context'] = archive
 		begin
 			res = @app.call(env)

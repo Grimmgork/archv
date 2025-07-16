@@ -1,4 +1,4 @@
-class Record < Data
+class Archivum::Model::Record < Data
 	def with(**setters)
 		values = deconstruct()
 		setters.each do |setter, value|

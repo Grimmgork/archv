@@ -1,4 +1,4 @@
-class Repository
+class Archivum::Data::Repository
 	def initialize(data, table, fields, primary_from_db, from_row, to_row)
 		@data = data
 		@table = table

@@ -1,6 +1,6 @@
 require_relative "../lib/archive.rb"
 
-class WorkContext
+class WorkerContext
 	def initialize(archive, document, attachments)
 		@archive = archive
 		@document = document
@@ -35,7 +35,7 @@ class Worker
 		documents = documents.sort_by { |doc| doc.last_moved } # least recently moved document first
 		
 		return if documents.length <= 0
-		document = documents[0]
+		document = documents.first
 
 		if not archive.call(TryTakeDocument, document.id)
 			return

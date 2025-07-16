@@ -1,4 +1,4 @@
-module GetAttachmentsForDocument
+module Archivum::Query::Document::Attachments
 	module_function
 
 	def call(context, doc_id, *filenames)

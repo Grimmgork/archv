@@ -1,7 +1,9 @@
-module OcrKeywordSearch
+module Archivum::Query::Document::OcrKeywordSearch
 	module_function
 
 	def call(context, attachment_name, *keywords)
+		throw "not implemented!"
+
 		statements = []
 		args = []
 
@@ -12,6 +14,5 @@ module OcrKeywordSearch
 		result = context.data.execute("SELECT name, page, sz, mtime, doc_id FROM sqlar WHERE name LIKE ? AND (#{statements.join(" OR ")}) ORDER BY mtime;", "ocr.txt", *args) do |row|
 
 		end
-		throw "not implemented!"
 	end
 end

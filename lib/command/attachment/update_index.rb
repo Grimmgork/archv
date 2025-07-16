@@ -1,4 +1,5 @@
-module UpdateAttachmentIndex
+
+module Archivum::Command::Attachment::UpdateIndex
 	module_function
 
 	def transaction
@@ -6,14 +7,14 @@ module UpdateAttachmentIndex
 	end
 
 	def call(context, doc_id, name = nil)
-		att_repo = context.call(RepositoryFactory, Attachment)
-		doc_repo = context.call(RepositoryFactory, Document)
+		att_repo = context.call(RepositoryFactory, Archivum::Model::Attachment)
+		doc_repo = context.call(RepositoryFactory, Archivum::Model::Document)
 
-		attachment = att_repo.read(Attachment.new(name, doc_id, nil, nil, nil))
+		attachment = att_repo.read(Archivum::Model::Attachment.new(name, doc_id, nil, nil, nil))
 		if attachment
 			document = nil
 			if attachment.doc_id != nil
-				document = doc_repo.read(Document.new(attachment.doc_id, nil, nil, nil, nil, nil))
+				document = doc_repo.read(Archivum::Model::Document.new(attachment.doc_id, nil, nil, nil, nil, nil))
 			end
 
 			data = context.call(ReadAttachmentData, attachment.doc_id, attachment.name)

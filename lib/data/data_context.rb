@@ -1,6 +1,6 @@
 require "sqlite3"
 
-class DataContext
+class Archivum::Data::Context
 	def initialize(path)
 		@db = SQLite3::Database.open path
 		@db.execute("PRAGMA journal_mode = DELETE;")
@@ -21,7 +21,7 @@ class DataContext
 	end
 
 	def transaction(mode=nil)
-		if mode == :none
+		if mode == :none or mode == nil
 			return yield
 		end
 

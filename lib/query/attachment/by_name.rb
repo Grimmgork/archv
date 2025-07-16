@@ -1,4 +1,4 @@
-module GetAttachmentByName
+module Archivum::Query::Attachment::ByName
 	module_function
 
 	def call(context, doc_id, name)
