@@ -8,6 +8,11 @@ class WorkerContext
 		@attachments = attachments
 		@actions = []
 		@tempfiles = []
+		@ensures = []
+	end
+
+	def ensure(&block)
+		@ensures << block 
 	end
 
 	def document
@@ -69,6 +74,10 @@ class WorkerContext
 
 	def tempfiles
 		@tempfiles
+	end
+
+	def ensures
+		@ensures
 	end
 end
 
@@ -142,6 +151,14 @@ class Worker
 		rescue => error
 			archive.call(Archivum::Command::Document::Move, document.id, "error")
 			puts "#{@location} ERROR: #{error}"
+		end
+
+		context.ensures.each do |block|
+			begin 
+				block.call
+			rescue => error
+				puts error
+			end
 		end
 		
 		archive.call(Archivum::Command::Document::Free, document.id)
