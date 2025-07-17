@@ -28,7 +28,6 @@ class Gui < Roda
 			document = archive.call(Archivum::Query::Document::ById, id)
 			r.halt(404) if not document
 			attachments = archive.call(Archivum::Query::Document::Attachments, id)
-
 			view "document", locals: {
 				document: document,
 				attachments: attachments

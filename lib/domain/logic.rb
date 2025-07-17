@@ -3,26 +3,14 @@ module Archivum::Logic
 	
 	def reattach_attachment(attachment, to_document, attachments)
 		raise "document already has an attachment with the same name!" if attachments.any? { |a| a.name == attachment.name }
-		Archivum::Model::Attachment.new(
-			attachment.name, 
-			to_document.id, 
-			attachment.page,
-			attachment.size,
-			attachment.mtime
-		)
+		attachment.with(doc_id: to_document.id)
 	end
 	
 	def rename_attachment(attachments, from, to)
 		raise "document already has an attachment with the name #{to}!" if attachments.any? { |a| a.name == to }
 		attachment = attachments.find { |a| a.name == from }
-		raise "document does not have an attachment with name #{from.name}!" if not attachment
-		Archivum::Model::Attachment.new(
-			to,
-			attachment.doc_id,
-			attachment.page,
-			attachment.size,
-			attachment.mtime
-		)
+		raise "document does not have an attachment with name #{from}!" if not attachment
+		attachment.with(name: to)
 	end
 	
 	def create_new_attachment(document, attachments, name, page, timestamp)
@@ -39,11 +27,14 @@ module Archivum::Logic
 	def create_new_document(title, location, timestamp)
 		trimmed_title = title.strip
 		raise "document must have a readable title" if trimmed_title.length <= 0
+		trimmed_location = location.strip
+		raise "invalid location name" unless trimmed_location.match(/^[a-zA-Z0-9_.-]+$/)
+		raise "invalid timestamp" unless timestamp
 		Archivum::Model::Document.new(
 			0,
 			trimmed_title,
 			timestamp,
-			location,
+			trimmed_location,
 			timestamp,
 			0
 		)
@@ -71,14 +62,9 @@ module Archivum::Logic
 		document.with(title: trimmed_title)
 	end
 	
-	def update_attachment_data(attachment, size)
+	def update_attachment_data(attachment, size, timestamp)
+		raise "invalid timestamp" if timestamp == nil 
 		raise "size must not be negative!" if size < 0
-		Archivum::Model::Attachment.new(
-			attachment.name,
-			attachment.doc_id,
-			attachment.page,
-			size,
-			Time.now.to_i
-		)
+		attachment.with(size: size, mtime: timestamp)
 	end
 end
