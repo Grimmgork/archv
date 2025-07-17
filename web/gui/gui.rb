@@ -18,7 +18,7 @@ class Gui < Roda
 		end
 
 		r.get "index" do
-			documents = archive.call(Archivum::Query::Document::Newest, 10)
+			documents = archive.call(Archivum::Query::Document::Newest, 500)
 			view "index", locals: { 
 				documents: documents
 			}

@@ -26,7 +26,7 @@ module Archivum::Logic
 	
 	def create_new_document(title, location, timestamp)
 		trimmed_title = title.strip
-		raise "document must have a readable title" if trimmed_title.length <= 0
+		trimmed_title = timestamp.to_s if trimmed_title.length <= 0
 		trimmed_location = location.strip
 		raise "invalid location name" unless trimmed_location.match(/^[a-zA-Z0-9_.-]+$/)
 		raise "invalid timestamp" unless timestamp
@@ -53,6 +53,7 @@ module Archivum::Logic
 		trimmed_location = location.strip
 		raise "invalid location name" unless trimmed_location.match(/^[a-zA-Z0-9_.-]+$/)
 		raise "invalid timestamp" unless timestamp
+		raise "document is already in location '#{trimmed_location}'" if trimmed_location == document.location
 		document.with(location: trimmed_location, last_moved: timestamp)
 	end
 
