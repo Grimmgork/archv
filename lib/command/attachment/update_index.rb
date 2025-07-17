@@ -7,8 +7,8 @@ module Archivum::Command::Attachment::UpdateIndex
 	end
 
 	def call(context, doc_id, name = nil)
-		att_repo = context.call(RepositoryFactory, Archivum::Model::Attachment)
-		doc_repo = context.call(RepositoryFactory, Archivum::Model::Document)
+		att_repo = context.call(Archivum::Command::RepositoryFactory, Archivum::Model::Attachment)
+		doc_repo = context.call(Archivum::Command::RepositoryFactory, Archivum::Model::Document)
 
 		attachment = att_repo.read(Archivum::Model::Attachment.new(name, doc_id, nil, nil, nil))
 		if attachment
@@ -17,8 +17,8 @@ module Archivum::Command::Attachment::UpdateIndex
 				document = doc_repo.read(Archivum::Model::Document.new(attachment.doc_id, nil, nil, nil, nil, nil))
 			end
 
-			data = context.call(ReadAttachmentData, attachment.doc_id, attachment.name)
-			hasindex = context.execute("SELECT * FROM sqlar_fts WHERE attachment_name=? LIMIT 1;", name).first
+			data = context.call(Archivum::Query::Attachment::ReadData, attachment.doc_id, attachment.name)
+			hasindex = context.data.execute("SELECT * FROM sqlar_fts WHERE attachment_name=? LIMIT 1;", name).first
 			if hasindex
 				context.data.execute("UPDATE sqlar_fts SET document_title=?, attachment_name=?, attachment_data=?;", 
 					document ? document.title : nil, 

@@ -12,6 +12,11 @@
 	<dt>Id</dt>
     <dd>#<%= document.id %></dd>
 </dl>
+<form hx-post="/gui/document/<%= document.id %>/move">
+	<label for="location">location</label>
+	<input name="location" type=text/>
+	<button type=submit>move</button>
+</form>
 <h2>Attachments:</h2>
 <% unless attachments.any? %>
 none

@@ -25,7 +25,7 @@ worker "ocr", "%.jpg", "%.png" do |context|
 	context.create_attachment("ocr.txt", 0, "#{tess_out}.txt")
 
 	# clean up
-	tess.close()
+	# tess.close()
 
 	# move to archive
   "archive"

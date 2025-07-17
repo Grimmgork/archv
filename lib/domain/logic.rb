@@ -25,26 +25,26 @@ module Archivum::Logic
 		)
 	end
 	
-	def create_new_attachment(document, attachments, name, page)
+	def create_new_attachment(document, attachments, name, page, timestamp)
 		raise "document already has an attachment with the name #{name}!" if attachments.any? { |a| a.name == name }
 		Archivum::Model::Attachment.new(
 			name,
 			document.id,
 			page,
 			0,
-			Time.now.to_i
+			timestamp
 		)
 	end
 	
-	def create_new_document(title, location)
+	def create_new_document(title, location, timestamp)
 		trimmed_title = title.strip
 		raise "document must have a readable title" if trimmed_title.length <= 0
 		Archivum::Model::Document.new(
 			0,
 			trimmed_title,
-			Time.now.to_i,
+			timestamp,
 			location,
-			Time.now.to_i,
+			timestamp,
 			0
 		)
 	end
@@ -58,8 +58,11 @@ module Archivum::Logic
 		document.with(taken: 0)
 	end
 	
-	def move_document(document, location)
-		document.with(location: location)
+	def move_document(document, location, timestamp)
+		trimmed_location = location.strip
+		raise "invalid location name" unless trimmed_location.match(/^[a-zA-Z0-9_.-]+$/)
+		raise "invalid timestamp" unless timestamp
+		document.with(location: trimmed_location, last_moved: timestamp)
 	end
 	
 	def update_attachment_data(attachment, size)

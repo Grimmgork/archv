@@ -10,13 +10,15 @@ class Tesseract
 
 	def run(oem: 1, psm: 4, lang: 'eng')
 		if not lang =~ /^[a-zA-Z0-9\-._]+$/
-			throw "cannot use '#{lang}' as parameter!"
+			raise "cannot use '#{lang}' as parameter!"
 		end
+
 		# run tesseract on scanlist
-		res = system("tesseract", @scanlist, "--oem", oem, "--psm", psm, "-l", lang, "pdf", "txt")
+		res = system("tesseract", @scanlist, @scanlist, "--oem", oem.to_s, "--psm", psm.to_s, "-l", lang, "pdf", "txt")
 		if res==nil or not res
-			throw "an error occured while running tesseract!"
+			raise "an error occured while running tesseract!"
 		end
+		
 		return @scanlist
 	end
 

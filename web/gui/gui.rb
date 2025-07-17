@@ -45,5 +45,11 @@ class Gui < Roda
 			id = archive.call(Archivum::Command::Document::Create, title)
 			r.halt(200, { 'HX-Redirect' => "/gui/document/#{id}" }, "")
 		end
+
+		r.post "document", Integer, "move" do |id|
+			location = r.params["location"]
+			archive.call(Archivum::Command::Document::Move, id, location)
+			r.halt(200, { 'HX-Refresh' => "true" }, "")
+		end
 	end
 end

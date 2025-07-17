@@ -7,14 +7,14 @@ module Archivum::Command::Attachment::CreateFromFileHandle
 	end
 
 	def call(context, doc_id, name, page, handle)
-		att_repo = context.call(RepositoryFactory, Archivum::Model::Attachment)
-		doc_repo = context.call(RepositoryFactory, Archivum::Model::Document)
+		att_repo = context.call(Archivum::Command::RepositoryFactory, Archivum::Model::Attachment)
+		doc_repo = context.call(Archivum::Command::RepositoryFactory, Archivum::Model::Document)
 		document = doc_repo.read(Archivum::Model::Document.new(doc_id, nil, nil, nil, nil, nil))
-		throw "document with id #{doc_id} does not exist!" if not document
-		attachments = context.call(GetAttachmentsForDocument, doc_id)
-		attachment = Archivum::Logic.create_new_attachment(document, attachments, name, page)
+		raise "document with id #{doc_id} does not exist!" if not document
+		attachments = context.call(Archivum::Query::Document::Attachments, doc_id)
+		attachment = Archivum::Logic.create_new_attachment(document, attachments, name, page, Time.now.to_i)
 		att_repo.insert(attachment)
 		data = handle.read()
-		archive.call(WriteAttachmentData, doc_id, name, data)
+		context.call(Archivum::Command::Attachment::WriteData, doc_id, name, data)
 	end
 end

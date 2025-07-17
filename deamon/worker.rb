@@ -63,7 +63,7 @@ class WorkerContext
 		File.delete(path)
 	end
 
-	def action
+	def actions
 		@actions
 	end
 
@@ -94,7 +94,7 @@ class CreateAttachmentAction
 	def execute(archive)
 		fh = File.new(@path, "rb")
 		begin
-			archive.call(Archive::Command::Attachment::CreateFromFileHandle, @document_id, @name, @page, fh)
+			archive.call(Archivum::Command::Attachment::CreateFromFileHandle, @document_id, @name, @page, fh)
 		ensure 
 			fh.close
 		end
@@ -118,6 +118,8 @@ class Worker
 		return unless documents.any?
 		document = documents.first
 
+		puts "kek"
+
 		return unless archive.call(Archivum::Command::Document::TryTake, document.id)
 
 		# TODO read the document again to prevent changes before locking
@@ -132,6 +134,7 @@ class Worker
 
 				# apply calculated changes
 				context.actions.each do |action|
+					puts action
 					action.execute(archive)
 				end
 			end
