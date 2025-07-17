@@ -12,9 +12,14 @@
 	<dt>Id</dt>
     <dd>#<%= document.id %></dd>
 </dl>
+<form hx-post="/gui/document/<%= document.id %>/updateTitle">
+	<label for="title">title</label>
+	<input name="title" type=text value="<%= document.title %>">
+	<button type=submit>update</button>
+</form>
 <form hx-post="/gui/document/<%= document.id %>/move">
 	<label for="location">location</label>
-	<input name="location" type=text/>
+	<input name="location" type=text value="<%= document.location %>"/>
 	<button type=submit>move</button>
 </form>
 <h2>Attachments:</h2>

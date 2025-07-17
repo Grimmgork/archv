@@ -64,6 +64,12 @@ module Archivum::Logic
 		raise "invalid timestamp" unless timestamp
 		document.with(location: trimmed_location, last_moved: timestamp)
 	end
+
+	def update_document_title(document, title)
+		trimmed_title = title.strip
+		raise "invalid title" if trimmed_title.length <= 0
+		document.with(title: trimmed_title)
+	end
 	
 	def update_attachment_data(attachment, size)
 		raise "size must not be negative!" if size < 0

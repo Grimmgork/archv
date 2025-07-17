@@ -13,5 +13,6 @@ module Archivum::Command::Document::Move
 		throw "document with id #{doc_id} does not exist!" if not document
 		document = Archivum::Logic.move_document(document, location, Time.now.to_i)
 		repo.update(document)
+		document
 	end
 end

@@ -8,8 +8,9 @@ module Archivum::Command::Document::UpdateTitle
 	end
 
 	def call(context, doc_id, title)
-		repo = context.call(RepositoryFactory, Archivum::Model::Document)
+		repo = context.call(Archivum::Command::RepositoryFactory, Archivum::Model::Document)
 		document = repo.read(Archivum::Model::Document.new(doc_id, nil, nil, nil, nil, nil))
-		throw "not implemented!"
+		document = Archivum::Logic.update_document_title(document, title)
+		repo.update(document)
 	end
 end

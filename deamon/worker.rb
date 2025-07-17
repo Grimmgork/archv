@@ -36,7 +36,7 @@ class WorkerContext
 	end
 
 	def create_tempfile(extension: nil, binmode: false, &block)
-		file = Tempfile.new(['', extension || ".tmp"], binmode: binmode)
+		file = Tempfile.new(['', ".#{extension || "tmp"}" ], binmode: binmode)
 		@tempfiles << file
 		begin
 			block.call(file) if block_given?
@@ -44,28 +44,6 @@ class WorkerContext
 			file.close
 		end
 		return file.path
-	end
-
-	def write_file(path, binmode: false, &block)
-		file = File.new(path, binmode ? "wb" : "w")
-		begin 
-			block.call(file) if block_given?
-		ensure
-			file.close
-		end
-	end
-
-	def read_file(path, binmode: false, &block)
-		file = File.new(path, binmode ? "rb" : "r")
-		begin
-			block.call(file) if block_given?
-		ensure
-			file.close
-		end
-	end
-
-	def delete_file(path)
-		File.delete(path)
 	end
 
 	def actions

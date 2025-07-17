@@ -7,7 +7,7 @@ worker "ocr", "%.jpg", "%.png" do |context|
 
 	# write attachments data to tempfiles
   paths = context.attachments.map do |attachment|
-		context.create_tempfile(extension: ".#{attachment.name}", binmode: true) do |fh|
+		context.create_tempfile(extension: attachment.name, binmode: true) do |fh|
 			context.read_attachment_data(attachment.name, fh)
 	  end
 	end

@@ -6,7 +6,6 @@ class Gui < Roda
 	plugin :halt
 	plugin :error_handler
 
-	
 	error do |e|
 		e.to_s
 	end
@@ -36,20 +35,26 @@ class Gui < Roda
 			}
 		end
 
-		r.get "document/create" do
+		r.get "document", "create" do
 			view "create_document"
 		end
 
-		r.post "document/create" do
+		r.post "document", "create" do
 			title = r.params["title"]
 			id = archive.call(Archivum::Command::Document::Create, title)
-			r.halt(200, { 'HX-Redirect' => "/gui/document/#{id}" }, "")
+			r.halt(200, { 'HX-Location' => "/gui/document/#{id}" }, "")
 		end
 
 		r.post "document", Integer, "move" do |id|
 			location = r.params["location"]
 			archive.call(Archivum::Command::Document::Move, id, location)
-			r.halt(200, { 'HX-Refresh' => "true" }, "")
+			r.halt(200, { "HX-Location" => "/gui/document/#{id}" }, "")
+		end
+
+		r.post "document", Integer, "updateTitle" do |id|
+			title = r.params["title"]
+			archive.call(Archivum::Command::Document::UpdateTitle, id, title)
+			r.halt(200, { "HX-Location" => "/gui/document/#{id}" }, "")
 		end
 	end
 end
