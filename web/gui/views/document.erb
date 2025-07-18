@@ -1,9 +1,7 @@
 <h1>Document:</h1>
-<h2>Details:</h2>
+<span style="font-weight: bold"><%= document.title %></span>
 <dl>
-	<dt>Title</dt>
-	<dd><%= document.title %></dd>
-	<dt>Timestamp</dt>
+	<dt>Created</dt>
     <dd><%= document.timestamp %></dd>
     <dt>Location</dt>
     <dd><%= document.location %></dd>
@@ -12,6 +10,7 @@
 	<dt>Id</dt>
     <dd>#<%= document.id %></dd>
 </dl>
+<button hx-delete="/gui/document/<%= document.id %>">delete</button>
 <form hx-post="/gui/document/<%= document.id %>/updateTitle">
 	<label for="title">title</label>
 	<input name="title" type=text value="<%= document.title %>">
@@ -22,13 +21,32 @@
 	<input name="location" type=text value="<%= document.location %>"/>
 	<button type=submit>move</button>
 </form>
-<h2>Attachments:</h2>
 <% unless attachments.any? %>
-none
+no attachments
 <% else %>
-<ul>
+<table>
+	<tr>
+		<th>attachment</th>
+		<th>page</th>
+		<th>mtime</th>
+		<th>actions</th>
+	</tr>
 	<% attachments.each do |attachment| %>
-		<li><a target="_blank" href="/api/document/<%= document.id %>/attachment/<%= attachment.name %>/data"><%= attachment.name %></a></li>
+		<tr>
+			<td><a target=_blank href="/api/document/<%= document.id %>/attachment/<%= attachment.name %>/data"><%= attachment.name %></a></td>
+			<td><%= attachment.page %></td>
+			<td><%= attachment.mtime %></td>
+			<td><button hx-delete="/gui/document/<%= document.id %>/attachment/<%= attachment.name %>">delete</button></td>
+		</tr>
 	<% end %>
-</ul>
+</table>
 <% end %>
+<form hx-post="/gui/document/<%= document.id %>/attachment" enctype="multipart/form-data" >
+	<label>data</label><br>
+	<input type=file name=data><br>
+	<label>name</label><br>
+	<input type=text name=name><br>
+	<label>page</label><br>
+	<input type=number name=page min=0><br>
+	<button type=submit>create</button>
+</form>

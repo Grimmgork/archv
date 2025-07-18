@@ -26,7 +26,7 @@ worker "ocr", "%.jpg", "%.png" do |context|
 
 	# clean up
 	context.ensure do
-		tess.close()
+		tess.close
 	end
 
 	# move to archive

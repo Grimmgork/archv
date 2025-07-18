@@ -7,8 +7,8 @@ module Archivum::Command::Attachment::Create
 	end
 
 	def call(context, doc_id, name, page)
-		doc_repo = context.call(Archivum::Command::RepositoryFactory, Archivum::Model::Document)
-		att_repo = context.call(Archivum::Command::RepositoryFactory, Archivum::Model::Attachment)
+		doc_repo = context.repository(Archivum::Model::Document)
+		att_repo = context.repository(Archivum::Model::Attachment)
 
 		document = doc_repo.read(Archivum::Model::Document.new(doc_id, nil, nil, nil, nil, nil))
 		throw "document with id #{doc_id} does not exists!" if not document

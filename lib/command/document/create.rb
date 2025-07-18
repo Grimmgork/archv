@@ -8,7 +8,7 @@ module Archivum::Command::Document::Create
 	end
 
 	def call(context, title, location = "new")
-		repo = context.call(Archivum::Command::RepositoryFactory, Archivum::Model::Document)
+		repo = context.repository(Archivum::Model::Document)
 		document = Archivum::Logic.create_new_document(title, location, Time.now.to_i)
 		repo.insert(document)
 	end

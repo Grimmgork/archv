@@ -22,6 +22,10 @@ class Archivum::Archive
 		end
 	end
 
+	def repository(type)
+		call(Archivum::Command::RepositoryFactory, type)
+	end
+
 	def close()
 		@data.close()
 	end

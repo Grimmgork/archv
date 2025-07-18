@@ -1,6 +1,7 @@
 class Gui < Roda
 	self.opts[:root] = "gui"
 
+	plugin :all_verbs
 	plugin :public, root: 'static'
 	plugin :render, escape: true
 	plugin :halt
@@ -54,6 +55,28 @@ class Gui < Roda
 			title = r.params["title"]
 			archive.call(Archivum::Command::Document::UpdateTitle, id, title)
 			r.halt(200, { "HX-Location" => "/gui/document/#{id}" }, "")
+		end
+
+		r.post "document", Integer, "attachment" do |id|
+			file = r.params["data"]
+			r.halt(400) unless file
+
+			name = r.params["name"]
+			name = file[:filename] if name.empty?
+			page = r.params["page"] || 0
+
+			archive.call(Archivum::Command::Attachment::CreateFromFileHandle, id, name, page, file[:tempfile])
+			r.halt(200, { "HX-Location" => "/gui/document/#{id}" }, "")
+		end
+
+		r.delete "document", Integer, "attachment", String do |id, name|
+			archive.call(Archivum::Command::Attachment::Delete, id, name)
+			r.halt(200, { "HX-Location" => "/gui/document/#{id}" }, "")
+		end
+
+		r.delete "document", Integer do |id|
+			archive.call(Archivum::Command::Document::Delete, id)
+			r.halt(200, { "HX-Location" => "/gui/index" }, "")
 		end
 	end
 end

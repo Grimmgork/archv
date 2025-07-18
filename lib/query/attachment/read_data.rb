@@ -2,7 +2,7 @@ module Archivum::Query::Attachment::ReadData
 	module_function
 
 	def call(context, doc_id, name, handle = nil)
-		repo = context.call(Archivum::Command::RepositoryFactory, Archivum::Model::Attachment)
+		repo = context.repository(Archivum::Model::Attachment)
 		attachment = repo.read(Archivum::Model::Attachment.new(name, doc_id, nil, nil, nil))
 		throw "attachment with name #{name} does not exist for document with id #{doc_id}" if not attachment
 		

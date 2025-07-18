@@ -7,8 +7,8 @@ module Archivum::Command::Attachment::UpdateIndex
 	end
 
 	def call(context, doc_id, name = nil)
-		att_repo = context.call(Archivum::Command::RepositoryFactory, Archivum::Model::Attachment)
-		doc_repo = context.call(Archivum::Command::RepositoryFactory, Archivum::Model::Document)
+		att_repo = context.repository(Archivum::Model::Attachment)
+		doc_repo = context.repository(Archivum::Model::Document)
 
 		attachment = att_repo.read(Archivum::Model::Attachment.new(name, doc_id, nil, nil, nil))
 		if attachment

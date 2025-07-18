@@ -7,7 +7,7 @@ module Archivum::Command::Attachment::Delete
 	end
 
 	def call(context, doc_id, name)
-		repo = context.call(Archivum::Command::RepositoryFactory, Archivum::Model::Attachment)
+		repo = context.repository(Archivum::Model::Attachment)
 		repo.delete(Archivum::Model::Attachment.new(name, doc_id, nil, nil, nil))
 	end
 end

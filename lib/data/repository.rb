@@ -44,7 +44,7 @@ class Archivum::Data::Repository
 		@from_row.call(row)
 	end
 
-	def get_fields()
+	def fields
 		@fields
 	end
 end

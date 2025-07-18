@@ -8,7 +8,7 @@ module Archivum::Command::Document::Move
 	end
 
 	def call(context, doc_id, location)
-		repo = context.call(Archivum::Command::RepositoryFactory, Archivum::Model::Document)
+		repo = context.repository(Archivum::Model::Document)
 		document = repo.read(Archivum::Model::Document.new(doc_id, nil, nil, nil, nil, nil))
 		throw "document with id #{doc_id} does not exist!" if not document
 		document = Archivum::Logic.move_document(document, location, Time.now.to_i)
