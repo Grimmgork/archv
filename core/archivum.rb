@@ -1,4 +1,4 @@
-require_relative "require"
+require_relative "archivum/require"
 
 class Archivum::Archive
 	def initialize(path)

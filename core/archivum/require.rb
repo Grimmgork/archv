@@ -25,7 +25,9 @@ def require_relative_glob(glob)
 	end
 end
 
-require_relative "model/record.rb"
+require_relative "model/record"
+require_relative "deamon/worker"
+require_relative_glob "deamon/*"
 require_relative_glob "model/*"
 require_relative_glob "data/*"
 require_relative_glob "domain/*"

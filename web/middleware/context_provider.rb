@@ -1,5 +1,3 @@
-require 'dotenv/load'
-
 class ContextProvider
 	def initialize(app)
 		@app = app

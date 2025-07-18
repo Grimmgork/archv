@@ -1,4 +1,3 @@
-require_relative "../lib/archive.rb"
 require 'tempfile'
 
 class WorkerContext
@@ -103,7 +102,7 @@ class Worker
 
 		documents = archive.call(Archivum::Query::Document::UntakenByLocation, @location)
 		documents = documents.sort_by { |doc| doc.last_moved } # least recently moved document first
-		
+
 		return unless documents.any?
 		document = documents.first
 
@@ -114,10 +113,11 @@ class Worker
 		attachments = archive.call(Archivum::Query::Document::Attachments, document.id, *@filenames)
 		context = WorkerContext.new(archive, document, attachments)
 		begin
-			next_location = @work.call(context)
+			next_location = @work.call(context) || @location
 			archive.transaction do 
+
 				# move to new location
-				archive.call(Archivum::Command::Document::Move, document.id, next_location || @location)
+				archive.call(Archivum::Command::Document::Move, document.id, next_location) if next_location != @location
 
 				# apply calculated changes
 				context.actions.each do |action|

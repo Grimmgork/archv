@@ -1,5 +1,3 @@
-require './tesseract.rb'
-
 worker "ocr", "%.jpg", "%.png" do |context|
 	unless context.attachments.any?
 		raise "no suitable attachments for ocr on document #{context.document.id}!"
