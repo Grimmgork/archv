@@ -5,9 +5,13 @@ class Workers
 
 	def initialize(workers)
 		@workers = workers
+		@locations = []
 	end
 
 	def worker(location, *filenames, &block)
+		raise "invalid location name '#{location}'." unless location.match(/^[a-zA-Z0-9_.-]+$/)
+		raise "worker for location '#{location}' is already defined." if @locations.include? location
+		@locations << location
 		@workers << Worker.new(location, filenames, &block)
 	end
 

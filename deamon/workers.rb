@@ -18,11 +18,11 @@ worker "ocr", "%.jpg", "%.png" do |context|
     
   # create attachment from result pdf file
 	context.delete_attachment("ocr.pdf")
-	context.create_attachment("ocr.pdf", 0, "#{tess_out}.pdf")
+	context.create_attachment("ocr.pdf", from: "#{tess_out}.pdf")
 
 	# create attachments from result txt file
 	context.delete_attachment("ocr.txt")
-	context.create_attachment("ocr.txt", 0, "#{tess_out}.txt")
+	context.create_attachment("ocr.txt", from: "#{tess_out}.txt")
 
 	# clean up
 	context.ensure do

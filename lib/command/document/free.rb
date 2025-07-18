@@ -8,7 +8,6 @@ module Archivum::Command::Document::Free
 	end
 
 	def call(context, doc_id)
-		puts "try to free document"
 		repo = context.repository(Archivum::Model::Document)
 		document = repo.read(Archivum::Model::Document.new(doc_id, nil, nil, nil, nil, nil))
 		throw "document with id #{doc_id} does not exist!" if not document

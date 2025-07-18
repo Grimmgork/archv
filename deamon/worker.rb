@@ -31,8 +31,10 @@ class WorkerContext
 		@actions << DeleteAttachmentAction.new(@document.id, name)
 	end
 
-	def create_attachment(name, page, path)
-		@actions << CreateAttachmentAction.new(@document.id, name, page, path)
+	def create_attachment(name = nil, from: nil, page: 0)
+		name = name || File.basename(from)
+		@actions << CreateAttachmentAction.new(@document.id, name, page, from)
+		name
 	end
 
 	def create_tempfile(extension: nil, binmode: false, &block)
@@ -105,8 +107,6 @@ class Worker
 		return unless documents.any?
 		document = documents.first
 
-		puts "kek"
-
 		return unless archive.call(Archivum::Command::Document::TryTake, document.id)
 
 		# TODO read the document again to prevent changes before locking
@@ -135,7 +135,7 @@ class Worker
 			begin 
 				block.call
 			rescue => error
-				puts error
+				puts "#{@location} ERROR: #{error}"
 			end
 		end
 		
