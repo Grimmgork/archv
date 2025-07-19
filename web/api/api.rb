@@ -1,4 +1,6 @@
-class Api < Roda
+module Archivum::Web end
+
+class Archivum::Web::Api < Roda
 
 	plugin :json, classes: [Array, Hash, Integer, Archivum::Model::Attachment, Archivum::Model::Document]
 	plugin :request_headers

@@ -1,4 +1,3 @@
-require_relative "../../domain/logic.rb"
 
 module Archivum::Command::Document::UpdateTitle
 	module_function

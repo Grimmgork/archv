@@ -1,4 +1,6 @@
-class ContextProvider
+module Archivum::Web end
+
+class Archivum::Web::ContextProviderMiddleware
 	def initialize(app)
 		@app = app
 	end

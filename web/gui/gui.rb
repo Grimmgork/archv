@@ -1,4 +1,6 @@
-class Gui < Roda
+module Archivum::Web end
+
+class Archivum::Web::Gui < Roda
 	self.opts[:root] = "gui"
 
 	plugin :all_verbs

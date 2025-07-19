@@ -7,12 +7,12 @@ $LOAD_PATH.unshift(File.expand_path("../deamon", __dir__))
 require 'archivum'
 require 'deamon'
 
+require_relative "util/tesseract"
 require_relative "middleware/context_provider"
 require_relative "app"
-require_relative "util/tesseract"
 
 deamon = Archivum::Deamon.new(ENV["DBPATH"]) do 
-	worker_file "worker/ocr.rb"
+	worker_file "worker/config.rb"
 end
 
 at_exit do
@@ -20,5 +20,5 @@ at_exit do
 	deamon.wait
 end
 
-use ContextProvider
-run App.app
+use Archivum::Web::ContextProviderMiddleware
+run Archivum::Web::App.app
