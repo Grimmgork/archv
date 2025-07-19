@@ -9,7 +9,7 @@ class Workers
 
 	def worker_file(path)
 		code = File.read(path)
-		eval(code, binding)
+		eval(code, binding, File.expand_path(path))
 	end
 
 	def worker(location, *filenames, &block)

@@ -7,7 +7,6 @@ $LOAD_PATH.unshift(File.expand_path("../deamon", __dir__))
 require 'archivum'
 require 'deamon'
 
-require_relative "util/tesseract"
 require_relative "middleware/context_provider"
 require_relative "app"
 
